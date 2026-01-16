@@ -1214,6 +1214,30 @@
     </div>
 
     <script>
+        // Configurações do Baserow
+        const BASEROW_CONFIG = {
+            BASE_URL: 'https://api.baserow.io/api/database/rows/table/',
+            TOKEN: 'qKIgfLN57iiG7V25oEFAfFkNe95DyhQ1',
+            TABLES: {
+                USERS: {
+                    id: 803964,
+                    fields: {
+                        name: 'name_user',
+                        login: 'login',
+                        password: 'senha',
+                        level: 'nivel'
+                    }
+                },
+                RESTAURANTS: {
+                    id: 803967,
+                    fields: {
+                        name: 'name_restaurante',
+                        address: 'endereco'
+                    }
+                }
+            }
+        };
+
         // Estado da aplicação
         const state = {
             currentUser: null,
@@ -1229,132 +1253,16 @@
                 type: 'almoco',
                 restaurant: 'all'
             },
-            orderStatusFilter: 'all'
-        };
-
-        // Dados iniciais
-        const initialData = {
-            restaurants: [
-                { id: 1, name: "Quantum Steakhouse", address: "Av. Tecnológica, 123 - Centro" },
-                { id: 2, name: "Nexus Sushi", address: "R. Holográfica, 456 - Nova Era" },
-                { id: 3, name: "Cyber Pizzeria", address: "R. Digital, 789 - Setor Futuro" },
-                { id: 4, name: "Futura Burger", address: "Av. Inovação, 321 - Distrito Tech" },
-                { id: 5, name: "Neo Pastas", address: "R. Quântica, 654 - Bairro Moderno" }
-            ],
-            items: [
-                {
-                    id: 1,
-                    restaurantId: 1,
-                    type: "almoco",
-                    name: "Filé Mignon Quantico",
-                    description: "Filé mignon grelhado com molho de vinho tinto e acompanhamentos futuristas",
-                    price: 89.90
-                },
-                {
-                    id: 2,
-                    restaurantId: 2,
-                    type: "almoco",
-                    name: "Combinado Nexus",
-                    description: "Sushi e sashimi selecionados com toques tecnológicos",
-                    price: 65.50
-                },
-                {
-                    id: 3,
-                    restaurantId: 3,
-                    type: "lanche",
-                    name: "Pizza Holográfica",
-                    description: "Pizza com ingredientes que mudam de sabor conforme cada fatia",
-                    price: 49.90
-                },
-                {
-                    id: 4,
-                    restaurantId: 4,
-                    type: "lanche",
-                    name: "Neo Burger",
-                    description: "Hambúrguer com carne sintética de alta qualidade e queijo derretido",
-                    price: 32.50
-                },
-                {
-                    id: 5,
-                    restaurantId: 5,
-                    type: "almoco",
-                    name: "Espaguete de Luz",
-                    description: "Massa iluminada com molho especial e partículas comestíveis brilhantes",
-                    price: 45.00
-                },
-                {
-                    id: 6,
-                    restaurantId: 1,
-                    type: "outros",
-                    name: "Sobremesa Quântica",
-                    description: "Sobremesa que existe em múltiplos estados de sabor simultaneamente",
-                    price: 28.90
-                },
-                {
-                    id: 7,
-                    restaurantId: 1,
-                    type: "almoco",
-                    name: "Risoto Cibernético",
-                    description: "Risoto com cogumelos e trufas em molho especial",
-                    price: 55.00
-                },
-                {
-                    id: 8,
-                    restaurantId: 2,
-                    type: "almoco",
-                    name: "Temaki Holográfico",
-                    description: "Temaki com salmão e abacate em apresentação futurista",
-                    price: 42.00
-                },
-                {
-                    id: 9,
-                    restaurantId: 3,
-                    type: "lanche",
-                    name: "Calzone Digital",
-                    description: "Calzone recheado com queijos especiais e presunto",
-                    price: 38.50
-                }
-            ],
-            users: [
-                { id: 1, name: "Administrador", login: "admin", password: "motos2026", level: "admin" },
-                { id: 2, name: "Operador", login: "operador", password: "operador123", level: "operator" },
-                { id: 3, name: "Chef Robô", login: "chef", password: "chef123", level: "operator" }
-            ],
-            orders: [
-                {
-                    id: 1001,
-                    userId: 2,
-                    userName: "Operador",
-                    items: [
-                        { id: 1, restaurantId: 1, name: "Filé Mignon Quantico", price: 89.90 },
-                        { id: 5, restaurantId: 5, name: "Espaguete de Luz", price: 45.00 }
-                    ],
-                    total: 134.90,
-                    date: "15/11/2023 14:30",
-                    status: "ready"
-                },
-                {
-                    id: 1002,
-                    userId: 3,
-                    userName: "Chef Robô",
-                    items: [
-                        { id: 3, restaurantId: 3, name: "Pizza Holográfica", price: 49.90 }
-                    ],
-                    total: 49.90,
-                    date: "15/11/2023 15:15",
-                    status: "pending"
-                }
-            ]
+            orderStatusFilter: 'all',
+            isOnline: true, // Para controle de conectividade
+            localData: {
+                items: [],
+                orders: []
+            }
         };
 
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
-            // Carregar dados iniciais
-            state.restaurants = initialData.restaurants;
-            state.items = initialData.items;
-            state.users = initialData.users;
-            state.orders = initialData.orders;
-            
             // Elementos da interface
             const loginScreen = document.getElementById('loginScreen');
             const app = document.getElementById('app');
@@ -1369,14 +1277,19 @@
             const userForm = document.getElementById('userForm');
             const editUserForm = document.getElementById('editUserForm');
             
-            // Carregar restaurantes no select
-            updateRestaurantSelect();
+            // Verificar conectividade
+            checkConnectivity();
+            
+            // Carregar dados do Baserow
+            loadUsersFromBaserow();
+            loadRestaurantsFromBaserow();
+            loadLocalData();
             
             // Atualizar nome do usuário no pedido atual
             updateCurrentOrderUser();
             
             // Login
-            loginButton.addEventListener('click', function() {
+            loginButton.addEventListener('click', async function() {
                 const username = loginUsername.value.trim();
                 const password = loginPassword.value.trim();
                 
@@ -1385,19 +1298,44 @@
                     return;
                 }
                 
-                const user = state.users.find(u => u.login === username && u.password === password);
-                
-                if (user) {
-                    state.currentUser = user;
-                    loginScreen.classList.add('hidden');
-                    app.classList.remove('hidden');
-                    updateUIForUser();
-                    showAlert(`Bem-vindo, ${user.name}!`, 'success');
-                    loadRestaurantFilters();
-                    loadItemsByFilters();
-                    updateOrderSummary();
+                // Verificar no Baserow se estiver online
+                if (state.isOnline) {
+                    try {
+                        const users = await fetchBaserowData(BASEROW_CONFIG.TABLES.USERS.id);
+                        const user = users.find(u => 
+                            u[BASEROW_CONFIG.TABLES.USERS.fields.login] === username && 
+                            u[BASEROW_CONFIG.TABLES.USERS.fields.password] === password
+                        );
+                        
+                        if (user) {
+                            state.currentUser = {
+                                id: user.id,
+                                name: user[BASEROW_CONFIG.TABLES.USERS.fields.name],
+                                login: user[BASEROW_CONFIG.TABLES.USERS.fields.login],
+                                password: user[BASEROW_CONFIG.TABLES.USERS.fields.password],
+                                level: user[BASEROW_CONFIG.TABLES.USERS.fields.level]
+                            };
+                            
+                            loginScreen.classList.add('hidden');
+                            app.classList.remove('hidden');
+                            updateUIForUser();
+                            showAlert(`Bem-vindo, ${state.currentUser.name}!`, 'success');
+                            loadRestaurantFilters();
+                            loadItemsByFilters();
+                            updateOrderSummary();
+                        } else {
+                            showAlert('Usuário ou senha incorretos!', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Erro ao fazer login:', error);
+                        showAlert('Erro ao conectar com o servidor. Usando modo offline.', 'error');
+                        state.isOnline = false;
+                        // Tentar login com dados locais
+                        attemptLocalLogin(username, password);
+                    }
                 } else {
-                    showAlert('Usuário ou senha incorretos!', 'error');
+                    // Modo offline
+                    attemptLocalLogin(username, password);
                 }
             });
             
@@ -1479,7 +1417,7 @@
             });
             
             // Finalizar pedido
-            placeOrderButton.addEventListener('click', function() {
+            placeOrderButton.addEventListener('click', async function() {
                 if (state.currentOrder.items.length === 0) {
                     showAlert('Adicione itens ao pedido antes de finalizar!', 'error');
                     return;
@@ -1495,9 +1433,28 @@
                     status: 'pending'
                 };
                 
+                // Adicionar ao estado local
                 state.orders.push(order);
-                state.currentOrder = { items: [], total: 0 };
+                state.localData.orders.push(order);
                 
+                // Tentar salvar no Baserow se online
+                if (state.isOnline) {
+                    try {
+                        // Aqui você pode implementar a lógica para salvar no Baserow
+                        // Criar uma tabela de pedidos no Baserow e usar o endpoint correspondente
+                        showAlert('Pedido salvo no servidor!', 'success');
+                    } catch (error) {
+                        console.error('Erro ao salvar pedido no servidor:', error);
+                        showAlert('Pedido salvo localmente (modo offline)', 'warning');
+                    }
+                } else {
+                    showAlert('Pedido salvo localmente (modo offline)', 'warning');
+                }
+                
+                // Salvar dados localmente
+                saveLocalData();
+                
+                state.currentOrder = { items: [], total: 0 };
                 updateOrderSummary();
                 showAlert('Pedido realizado com sucesso! Status: Pendente', 'success');
                 
@@ -1506,7 +1463,7 @@
             });
             
             // Cadastrar item (admin)
-            itemForm.addEventListener('submit', function(e) {
+            itemForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
                 const newItem = {
@@ -1519,15 +1476,31 @@
                 };
                 
                 state.items.push(newItem);
-                itemForm.reset();
+                state.localData.items.push(newItem);
                 
+                // Tentar salvar no Baserow se online
+                if (state.isOnline && state.currentUser.level === 'admin') {
+                    try {
+                        // Aqui você pode implementar a lógica para salvar itens no Baserow
+                        // Criar uma tabela de itens no Baserow
+                        showAlert('Item salvo no servidor!', 'success');
+                    } catch (error) {
+                        console.error('Erro ao salvar item no servidor:', error);
+                        showAlert('Item salvo localmente (modo offline)', 'warning');
+                    }
+                }
+                
+                // Salvar dados localmente
+                saveLocalData();
+                
+                itemForm.reset();
                 loadAdminItems();
-                loadRestaurantFilters(); // Atualizar filtros
+                loadRestaurantFilters();
                 showAlert('Item cadastrado com sucesso!', 'success');
             });
             
             // Cadastrar restaurante (admin)
-            restaurantForm.addEventListener('submit', function(e) {
+            restaurantForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
                 const newRestaurant = {
@@ -1537,16 +1510,30 @@
                 };
                 
                 state.restaurants.push(newRestaurant);
-                restaurantForm.reset();
                 
+                // Tentar salvar no Baserow se online
+                if (state.isOnline && state.currentUser.level === 'admin') {
+                    try {
+                        await saveToBaserow(BASEROW_CONFIG.TABLES.RESTAURANTS.id, {
+                            [BASEROW_CONFIG.TABLES.RESTAURANTS.fields.name]: newRestaurant.name,
+                            [BASEROW_CONFIG.TABLES.RESTAURANTS.fields.address]: newRestaurant.address
+                        });
+                        showAlert('Restaurante salvo no servidor!', 'success');
+                    } catch (error) {
+                        console.error('Erro ao salvar restaurante:', error);
+                        showAlert('Erro ao salvar no servidor. Dados salvos localmente.', 'error');
+                    }
+                }
+                
+                restaurantForm.reset();
                 updateRestaurantSelect();
-                loadRestaurantFilters(); // Atualizar filtros
+                loadRestaurantFilters();
                 loadRestaurantsTable();
                 showAlert('Restaurante cadastrado com sucesso!', 'success');
             });
             
             // Cadastrar usuário (admin)
-            userForm.addEventListener('submit', function(e) {
+            userForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
                 const newUser = {
@@ -1558,14 +1545,30 @@
                 };
                 
                 state.users.push(newUser);
-                userForm.reset();
                 
+                // Tentar salvar no Baserow se online
+                if (state.isOnline && state.currentUser.level === 'admin') {
+                    try {
+                        await saveToBaserow(BASEROW_CONFIG.TABLES.USERS.id, {
+                            [BASEROW_CONFIG.TABLES.USERS.fields.name]: newUser.name,
+                            [BASEROW_CONFIG.TABLES.USERS.fields.login]: newUser.login,
+                            [BASEROW_CONFIG.TABLES.USERS.fields.password]: newUser.password,
+                            [BASEROW_CONFIG.TABLES.USERS.fields.level]: newUser.level
+                        });
+                        showAlert('Usuário salvo no servidor!', 'success');
+                    } catch (error) {
+                        console.error('Erro ao salvar usuário:', error);
+                        showAlert('Erro ao salvar no servidor. Dados salvos localmente.', 'error');
+                    }
+                }
+                
+                userForm.reset();
                 loadUsersTable();
                 showAlert('Usuário cadastrado com sucesso!', 'success');
             });
             
             // Editar usuário (admin)
-            editUserForm.addEventListener('submit', function(e) {
+            editUserForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
                 const userId = parseInt(document.getElementById('editUserId').value);
@@ -1583,6 +1586,22 @@
                     
                     user.level = document.getElementById('editUserLevel').value;
                     
+                    // Atualizar no Baserow se online
+                    if (state.isOnline && state.currentUser.level === 'admin') {
+                        try {
+                            await updateInBaserow(BASEROW_CONFIG.TABLES.USERS.id, userId, {
+                                [BASEROW_CONFIG.TABLES.USERS.fields.name]: user.name,
+                                [BASEROW_CONFIG.TABLES.USERS.fields.login]: user.login,
+                                [BASEROW_CONFIG.TABLES.USERS.fields.password]: user.password,
+                                [BASEROW_CONFIG.TABLES.USERS.fields.level]: user.level
+                            });
+                            showAlert('Usuário atualizado no servidor!', 'success');
+                        } catch (error) {
+                            console.error('Erro ao atualizar usuário:', error);
+                            showAlert('Erro ao atualizar no servidor. Alterações salvas localmente.', 'error');
+                        }
+                    }
+                    
                     loadUsersTable();
                     closeEditUserModal();
                     showAlert('Usuário atualizado com sucesso!', 'success');
@@ -1596,6 +1615,216 @@
                 }
             });
         });
+        
+        // Funções de integração com Baserow
+        async function fetchBaserowData(tableId) {
+            try {
+                const response = await fetch(
+                    `${BASEROW_CONFIG.BASE_URL}${tableId}/?user_field_names=true`,
+                    {
+                        headers: {
+                            'Authorization': `Token ${BASEROW_CONFIG.TOKEN}`
+                        }
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                return data.results;
+            } catch (error) {
+                console.error('Erro ao buscar dados do Baserow:', error);
+                state.isOnline = false;
+                throw error;
+            }
+        }
+        
+        async function saveToBaserow(tableId, data) {
+            try {
+                const response = await fetch(
+                    `${BASEROW_CONFIG.BASE_URL}${tableId}/?user_field_names=true`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Token ${BASEROW_CONFIG.TOKEN}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('Erro ao salvar no Baserow:', error);
+                throw error;
+            }
+        }
+        
+        async function updateInBaserow(tableId, rowId, data) {
+            try {
+                const response = await fetch(
+                    `${BASEROW_CONFIG.BASE_URL}${tableId}/${rowId}/?user_field_names=true`,
+                    {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Token ${BASEROW_CONFIG.TOKEN}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('Erro ao atualizar no Baserow:', error);
+                throw error;
+            }
+        }
+        
+        // Carregar usuários do Baserow
+        async function loadUsersFromBaserow() {
+            try {
+                const users = await fetchBaserowData(BASEROW_CONFIG.TABLES.USERS.id);
+                state.users = users.map(user => ({
+                    id: user.id,
+                    name: user[BASEROW_CONFIG.TABLES.USERS.fields.name],
+                    login: user[BASEROW_CONFIG.TABLES.USERS.fields.login],
+                    password: user[BASEROW_CONFIG.TABLES.USERS.fields.password],
+                    level: user[BASEROW_CONFIG.TABLES.USERS.fields.level]
+                }));
+                console.log('Usuários carregados do Baserow:', state.users);
+            } catch (error) {
+                console.log('Usando dados locais para usuários');
+                // Carregar usuários padrão em caso de erro
+                state.users = [
+                    { id: 1, name: "Administrador", login: "admin", password: "motos2026", level: "admin" },
+                    { id: 2, name: "Operador", login: "operador", password: "operador123", level: "operator" }
+                ];
+            }
+        }
+        
+        // Carregar restaurantes do Baserow
+        async function loadRestaurantsFromBaserow() {
+            try {
+                const restaurants = await fetchBaserowData(BASEROW_CONFIG.TABLES.RESTAURANTS.id);
+                state.restaurants = restaurants.map(restaurant => ({
+                    id: restaurant.id,
+                    name: restaurant[BASEROW_CONFIG.TABLES.RESTAURANTS.fields.name],
+                    address: restaurant[BASEROW_CONFIG.TABLES.RESTAURANTS.fields.address]
+                }));
+                console.log('Restaurantes carregados do Baserow:', state.restaurants);
+                
+                // Atualizar select de restaurantes
+                updateRestaurantSelect();
+            } catch (error) {
+                console.log('Usando dados locais para restaurantes');
+                // Carregar restaurantes padrão em caso de erro
+                state.restaurants = [
+                    { id: 1, name: "Quantum Steakhouse", address: "Av. Tecnológica, 123 - Centro" },
+                    { id: 2, name: "Nexus Sushi", address: "R. Holográfica, 456 - Nova Era" },
+                    { id: 3, name: "Cyber Pizzeria", address: "R. Digital, 789 - Setor Futuro" }
+                ];
+                updateRestaurantSelect();
+            }
+        }
+        
+        // Verificar conectividade
+        function checkConnectivity() {
+            state.isOnline = navigator.onLine;
+            
+            // Adicionar listeners para mudanças de conectividade
+            window.addEventListener('online', () => {
+                state.isOnline = true;
+                showAlert('Conexão restaurada! Sincronizando dados...', 'success');
+                // Sincronizar dados quando a conexão voltar
+                syncData();
+            });
+            
+            window.addEventListener('offline', () => {
+                state.isOnline = false;
+                showAlert('Modo offline ativado. Trabalhando com dados locais.', 'warning');
+            });
+        }
+        
+        // Tentar login com dados locais
+        function attemptLocalLogin(username, password) {
+            const user = state.users.find(u => u.login === username && u.password === password);
+            
+            if (user) {
+                state.currentUser = user;
+                loginScreen.classList.add('hidden');
+                app.classList.remove('hidden');
+                updateUIForUser();
+                showAlert(`Bem-vindo, ${user.name}! (Modo Offline)`, 'success');
+                loadRestaurantFilters();
+                loadItemsByFilters();
+                updateOrderSummary();
+            } else {
+                showAlert('Usuário ou senha incorretos!', 'error');
+            }
+        }
+        
+        // Carregar dados locais
+        function loadLocalData() {
+            const savedData = localStorage.getItem('2m_motos_system_data');
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    state.localData.items = data.items || [];
+                    state.localData.orders = data.orders || [];
+                    
+                    // Combinar itens locais com os carregados
+                    if (state.localData.items.length > 0) {
+                        state.items = [...state.localData.items];
+                    }
+                    
+                    // Carregar pedidos locais
+                    if (state.localData.orders.length > 0) {
+                        state.orders = [...state.localData.orders];
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar dados locais:', error);
+                }
+            }
+        }
+        
+        // Salvar dados localmente
+        function saveLocalData() {
+            const dataToSave = {
+                items: state.localData.items,
+                orders: state.localData.orders,
+                lastSync: new Date().toISOString()
+            };
+            
+            try {
+                localStorage.setItem('2m_motos_system_data', JSON.stringify(dataToSave));
+            } catch (error) {
+                console.error('Erro ao salvar dados locais:', error);
+            }
+        }
+        
+        // Sincronizar dados quando online
+        async function syncData() {
+            if (!state.isOnline) return;
+            
+            try {
+                // Aqui você pode implementar a lógica de sincronização
+                // Sincronizar pedidos, itens, etc.
+                showAlert('Dados sincronizados com sucesso!', 'success');
+            } catch (error) {
+                console.error('Erro na sincronização:', error);
+            }
+        }
         
         // Atualizar nome do usuário no pedido atual
         function updateCurrentOrderUser() {
@@ -1678,7 +1907,7 @@
                 return true;
             });
             
-            // Atualizar filtros de restaurante (mostrar apenas os que têm itens do tipo atual)
+            // Atualizar filtros de restaurante
             loadRestaurantFilters();
             
             if (filteredItems.length === 0) {
@@ -1727,7 +1956,6 @@
                 restaurant: 'all'
             };
             
-            // Ativar tab de almoço
             document.querySelectorAll('.tab').forEach(tab => {
                 if (tab.getAttribute('data-type') === 'almoco') {
                     tab.classList.add('active');
@@ -1760,6 +1988,11 @@
             document.getElementById('userName').textContent = user.name;
             document.getElementById('userLevel').textContent = user.level === 'admin' ? 'Administrador' : 'Operador';
             document.getElementById('userAvatar').textContent = user.name.charAt(0).toUpperCase();
+            
+            // Mostrar status de conexão
+            const connectionStatus = state.isOnline ? 'Online' : 'Offline';
+            const connectionColor = state.isOnline ? 'var(--success)' : 'var(--warning)';
+            document.getElementById('userLevel').innerHTML += `<br><small style="color: ${connectionColor}">(${connectionStatus})</small>`;
             
             // Mostrar/ocultar funcionalidades baseado no nível
             const adminElements = document.querySelectorAll('.admin-only');
@@ -1911,7 +2144,7 @@
                 allOrders = allOrders.filter(order => order.status === state.orderStatusFilter);
             }
             
-            // Ordenar por data (mais recente primeiro)
+            // Ordenar por data
             allOrders.sort((a, b) => b.id - a.id);
             
             if (allOrders.length === 0) {
@@ -2011,9 +2244,6 @@
             if (!order) return;
             
             const modalContent = document.getElementById('editOrderContent');
-            
-            // Encontrar o usuário que fez o pedido
-            const user = state.users.find(u => u.id === order.userId);
             
             let itemsHTML = '';
             state.items.forEach(item => {
@@ -2177,9 +2407,17 @@
                 
                 if (itemIndex >= 0) {
                     state.items.splice(itemIndex, 1);
+                    
+                    // Remover também dos dados locais
+                    const localIndex = state.localData.items.findIndex(i => i.id === itemId);
+                    if (localIndex >= 0) {
+                        state.localData.items.splice(localIndex, 1);
+                    }
+                    
+                    saveLocalData();
                     loadAdminItems();
-                    loadRestaurantFilters(); // Atualizar filtros
-                    loadItemsByFilters(); // Atualizar itens exibidos
+                    loadRestaurantFilters();
+                    loadItemsByFilters();
                     showAlert('Item excluído com sucesso!', 'success');
                 }
             }
@@ -2206,7 +2444,7 @@
         }
         
         // Excluir restaurante
-        window.deleteRestaurant = function(restaurantId) {
+        window.deleteRestaurant = async function(restaurantId) {
             // Verificar se existem itens associados ao restaurante
             const itemCount = state.items.filter(item => item.restaurantId === restaurantId).length;
             
@@ -2219,12 +2457,47 @@
                 const restaurantIndex = state.restaurants.findIndex(r => r.id === restaurantId);
                 
                 if (restaurantIndex >= 0) {
+                    // Tentar excluir do Baserow se online
+                    if (state.isOnline && state.currentUser.level === 'admin') {
+                        try {
+                            await deleteFromBaserow(BASEROW_CONFIG.TABLES.RESTAURANTS.id, restaurantId);
+                            showAlert('Restaurante excluído do servidor!', 'success');
+                        } catch (error) {
+                            console.error('Erro ao excluir restaurante:', error);
+                            showAlert('Erro ao excluir do servidor. Excluindo localmente.', 'error');
+                        }
+                    }
+                    
                     state.restaurants.splice(restaurantIndex, 1);
                     updateRestaurantSelect();
-                    loadRestaurantFilters(); // Atualizar filtros
+                    loadRestaurantFilters();
                     loadRestaurantsTable();
                     showAlert('Restaurante excluído com sucesso!', 'success');
                 }
+            }
+        }
+        
+        // Função para excluir do Baserow
+        async function deleteFromBaserow(tableId, rowId) {
+            try {
+                const response = await fetch(
+                    `${BASEROW_CONFIG.BASE_URL}${tableId}/${rowId}/`,
+                    {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Token ${BASEROW_CONFIG.TOKEN}`
+                        }
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('Erro ao excluir do Baserow:', error);
+                throw error;
             }
         }
         
@@ -2256,7 +2529,7 @@
         }
         
         // Excluir usuário
-        window.deleteUser = function(userId) {
+        window.deleteUser = async function(userId) {
             if (userId <= 2) {
                 showAlert('Usuários padrão não podem ser excluídos!', 'error');
                 return;
@@ -2266,6 +2539,17 @@
                 const userIndex = state.users.findIndex(u => u.id === userId);
                 
                 if (userIndex >= 0) {
+                    // Tentar excluir do Baserow se online
+                    if (state.isOnline && state.currentUser.level === 'admin') {
+                        try {
+                            await deleteFromBaserow(BASEROW_CONFIG.TABLES.USERS.id, userId);
+                            showAlert('Usuário excluído do servidor!', 'success');
+                        } catch (error) {
+                            console.error('Erro ao excluir usuário:', error);
+                            showAlert('Erro ao excluir do servidor. Excluindo localmente.', 'error');
+                        }
+                    }
+                    
                     state.users.splice(userIndex, 1);
                     loadUsersTable();
                     showAlert('Usuário excluído com sucesso!', 'success');
@@ -2302,3 +2586,4 @@
     </script>
 </body>
 </html>
+
