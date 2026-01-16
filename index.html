@@ -804,6 +804,100 @@
             color: #aaa;
             font-size: 0.9rem;
         }
+        
+        /* Status indicators */
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .status-online {
+            background-color: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+        
+        .status-offline {
+            background-color: var(--warning);
+            box-shadow: 0 0 10px var(--warning);
+        }
+        
+        .sync-status {
+            font-size: 0.8rem;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .sync-btn {
+            padding: 4px 8px;
+            font-size: 0.7rem;
+            background-color: rgba(0, 243, 255, 0.1);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .sync-btn:hover {
+            background-color: rgba(0, 243, 255, 0.2);
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 243, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Badge for pending sync */
+        .badge-sync {
+            background-color: rgba(255, 181, 45, 0.2);
+            color: var(--warning);
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 5px;
+        }
+        
+        /* Log entry styles */
+        .log-entry {
+            padding: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.85rem;
+        }
+        
+        .log-entry-success {
+            color: var(--success);
+        }
+        
+        .log-entry-error {
+            color: var(--danger);
+        }
+        
+        .log-entry-warning {
+            color: var(--warning);
+        }
+        
+        .log-entry-info {
+            color: var(--primary);
+        }
+        
+        .log-timestamp {
+            color: #888;
+            font-size: 0.75rem;
+        }
     </style>
 </head>
 <body>
@@ -830,6 +924,10 @@
                 </button>
             </div>
             
+            <div id="connectionStatus" style="margin-top: 20px; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: var(--radius);">
+                <div id="statusText" style="color: #aaa; font-size: 0.9rem;">Verificando conexão...</div>
+            </div>
+            
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
                 <p style="color: #aaa; font-size: 0.9rem;">
                     <strong>Sistema Digital Inteligente de Pedidos 2M Motos</strong>
@@ -853,6 +951,13 @@
                     <div class="user-details">
                         <div class="user-name" id="userName">Administrador</div>
                         <div class="user-level" id="userLevel">Administrador</div>
+                        <div class="sync-status" id="syncStatus">
+                            <span class="status-indicator status-online" id="statusIndicator"></span>
+                            <span id="syncText">Online</span>
+                            <button class="sync-btn" onclick="forceSync()" id="syncButton">
+                                <i class="fas fa-sync-alt"></i> Sincronizar
+                            </button>
+                        </div>
                     </div>
                     <button id="logoutButton" class="logout-btn">
                         <i class="fas fa-sign-out-alt"></i> Sair
@@ -892,6 +997,11 @@
                         <li class="nav-item admin-only">
                             <a href="#" class="nav-link" data-section="users">
                                 <i class="fas fa-users nav-icon"></i> Usuários
+                            </a>
+                        </li>
+                        <li class="nav-item admin-only">
+                            <a href="#" class="nav-link" data-section="sync">
+                                <i class="fas fa-sync-alt nav-icon"></i> Sincronização
                             </a>
                         </li>
                     </ul>
@@ -1145,6 +1255,89 @@
                             </table>
                         </div>
                     </div>
+                    
+                    <!-- Nova Seção: Sincronização -->
+                    <div id="sync-section" class="section hidden">
+                        <h2 class="section-title">
+                            <i class="fas fa-sync-alt"></i> Sincronização
+                        </h2>
+                        
+                        <div class="card" style="margin-bottom: 20px;">
+                            <h3 class="card-title">Status da Conexão</h3>
+                            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                                <div id="syncStatusIndicator" class="status-indicator status-online"></div>
+                                <div>
+                                    <div id="syncStatusText" style="font-weight: 600; color: var(--primary);">Conectado ao Baserow</div>
+                                    <div id="syncLastUpdate" style="font-size: 0.9rem; color: #aaa;">Última sincronização: Nunca</div>
+                                </div>
+                            </div>
+                            
+                            <div class="sync-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px;">
+                                <div class="stat-card" style="background-color: rgba(0,0,0,0.2); padding: 15px; border-radius: var(--radius);">
+                                    <div style="font-size: 2rem; color: var(--primary); text-align: center;" id="statUsers">0</div>
+                                    <div style="text-align: center; color: #aaa;">Usuários</div>
+                                </div>
+                                <div class="stat-card" style="background-color: rgba(0,0,0,0.2); padding: 15px; border-radius: var(--radius);">
+                                    <div style="font-size: 2rem; color: var(--primary); text-align: center;" id="statRestaurants">0</div>
+                                    <div style="text-align: center; color: #aaa;">Restaurantes</div>
+                                </div>
+                                <div class="stat-card" style="background-color: rgba(0,0,0,0.2); padding: 15px; border-radius: var(--radius);">
+                                    <div style="font-size: 2rem; color: var(--primary); text-align: center;" id="statItems">0</div>
+                                    <div style="text-align: center; color: #aaa;">Itens</div>
+                                </div>
+                                <div class="stat-card" style="background-color: rgba(0,0,0,0.2); padding: 15px; border-radius: var(--radius);">
+                                    <div style="font-size: 2rem; color: var(--primary); text-align: center;" id="statOrders">0</div>
+                                    <div style="text-align: center; color: #aaa;">Pedidos</div>
+                                </div>
+                                <div class="stat-card" style="background-color: rgba(0,0,0,0.2); padding: 15px; border-radius: var(--radius);">
+                                    <div style="font-size: 2rem; color: var(--primary); text-align: center;" id="statPending">0</div>
+                                    <div style="text-align: center; color: #aaa;">Pendentes</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card" style="margin-bottom: 20px;">
+                            <h3 class="card-title">Controle de Sincronização</h3>
+                            <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;">
+                                <button class="btn btn-primary" onclick="syncAllData()">
+                                    <i class="fas fa-sync-alt"></i> Sincronizar Tudo
+                                </button>
+                                <button class="btn" style="background-color: transparent; border: 1px solid var(--primary); color: var(--primary);" onclick="syncUsers()">
+                                    <i class="fas fa-users"></i> Sinc. Usuários
+                                </button>
+                                <button class="btn" style="background-color: transparent; border: 1px solid var(--primary); color: var(--primary);" onclick="syncRestaurants()">
+                                    <i class="fas fa-store"></i> Sinc. Restaurantes
+                                </button>
+                                <button class="btn" style="background-color: transparent; border: 1px solid var(--primary); color: var(--primary);" onclick="syncItems()">
+                                    <i class="fas fa-hamburger"></i> Sinc. Itens
+                                </button>
+                                <button class="btn" style="background-color: transparent; border: 1px solid var(--primary); color: var(--primary);" onclick="syncOrders()">
+                                    <i class="fas fa-clipboard-list"></i> Sinc. Pedidos
+                                </button>
+                                <button class="btn" style="background-color: transparent; border: 1px solid var(--success); color: var(--success);" onclick="syncPendingData()">
+                                    <i class="fas fa-upload"></i> Enviar Pendentes
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3 class="card-title">Log de Sincronização</h3>
+                            <div id="syncLog" style="max-height: 300px; overflow-y: auto; margin-top: 15px; padding: 10px; background-color: rgba(0,0,0,0.2); border-radius: var(--radius);">
+                                <div style="color: #aaa; text-align: center; padding: 20px;">Nenhuma atividade de sincronização ainda.</div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+                                <button class="btn btn-sm" style="background-color: transparent; border: 1px solid var(--danger); color: var(--danger);" onclick="clearSyncLog()">
+                                    <i class="fas fa-trash"></i> Limpar Log
+                                </button>
+                                <button class="btn btn-sm" style="background-color: transparent; border: 1px solid var(--primary); color: var(--primary);" onclick="exportSyncLog()">
+                                    <i class="fas fa-download"></i> Exportar Log
+                                </button>
+                                <button class="btn btn-sm" style="background-color: transparent; border: 1px solid var(--secondary); color: var(--secondary);" onclick="testBaserowConnection()">
+                                    <i class="fas fa-plug"></i> Testar Conexão
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </main>
             </div>
             
@@ -1214,11 +1407,12 @@
     </div>
 
     <script>
-        // Configurações do Baserow
+        // CONFIGURAÇÕES DO BASEROW COM TODOS OS IDs ATUALIZADOS
         const BASEROW_CONFIG = {
             BASE_URL: 'https://api.baserow.io/api/database/rows/table/',
             TOKEN: 'qKIgfLN57iiG7V25oEFAfFkNe95DyhQ1',
             TABLES: {
+                // Tabela existente: usuarios
                 USERS: {
                     id: 803964,
                     fields: {
@@ -1228,11 +1422,44 @@
                         level: 'nivel'
                     }
                 },
+                // Tabela existente: restaurantes
                 RESTAURANTS: {
                     id: 803967,
                     fields: {
                         name: 'name_restaurante',
                         address: 'endereco'
+                    }
+                },
+                // NOVA TABELA: itens_menu
+                ITEMS: {
+                    id: 804085,
+                    fields: {
+                        name: 'nome_item',
+                        description: 'descricao',
+                        type: 'tipo',
+                        price: 'preco',
+                        restaurant_id: 'restaurante_id'
+                    }
+                },
+                // NOVA TABELA: pedidos
+                ORDERS: {
+                    id: 804086,
+                    fields: {
+                        order_number: 'numero_pedido',
+                        user_id: 'usuario_id',
+                        date: 'data_pedido',
+                        status: 'status',
+                        total: 'total'
+                    }
+                },
+                // NOVA TABELA: itens_pedido
+                ORDER_ITEMS: {
+                    id: 804088,
+                    fields: {
+                        order_id: 'pedido_id',
+                        item_id: 'item_id',
+                        quantity: 'quantidade',
+                        unit_price: 'preco_unitario'
                     }
                 }
             }
@@ -1245,6 +1472,7 @@
             items: [],
             users: [],
             orders: [],
+            orderItems: [],
             currentOrder: {
                 items: [],
                 total: 0
@@ -1254,11 +1482,14 @@
                 restaurant: 'all'
             },
             orderStatusFilter: 'all',
-            isOnline: true, // Para controle de conectividade
+            isOnline: true,
             localData: {
                 items: [],
-                orders: []
-            }
+                orders: [],
+                orderItems: [],
+                pendingSync: []
+            },
+            syncLog: []
         };
 
         // Inicialização
@@ -1277,13 +1508,14 @@
             const userForm = document.getElementById('userForm');
             const editUserForm = document.getElementById('editUserForm');
             
+            // Atualizar status da conexão
+            updateConnectionStatus();
+            
             // Verificar conectividade
             checkConnectivity();
             
-            // Carregar dados do Baserow
-            loadUsersFromBaserow();
-            loadRestaurantsFromBaserow();
-            loadLocalData();
+            // Carregar dados iniciais
+            initializeData();
             
             // Atualizar nome do usuário no pedido atual
             updateCurrentOrderUser();
@@ -1298,9 +1530,13 @@
                     return;
                 }
                 
-                // Verificar no Baserow se estiver online
-                if (state.isOnline) {
-                    try {
+                // Adicionar spinner ao botão
+                const originalHtml = loginButton.innerHTML;
+                loginButton.innerHTML = '<div class="spinner"></div> Entrando...';
+                loginButton.disabled = true;
+                
+                try {
+                    if (state.isOnline) {
                         const users = await fetchBaserowData(BASEROW_CONFIG.TABLES.USERS.id);
                         const user = users.find(u => 
                             u[BASEROW_CONFIG.TABLES.USERS.fields.login] === username && 
@@ -1308,34 +1544,60 @@
                         );
                         
                         if (user) {
-                            state.currentUser = {
-                                id: user.id,
-                                name: user[BASEROW_CONFIG.TABLES.USERS.fields.name],
-                                login: user[BASEROW_CONFIG.TABLES.USERS.fields.login],
-                                password: user[BASEROW_CONFIG.TABLES.USERS.fields.password],
-                                level: user[BASEROW_CONFIG.TABLES.USERS.fields.level]
-                            };
-                            
-                            loginScreen.classList.add('hidden');
-                            app.classList.remove('hidden');
-                            updateUIForUser();
-                            showAlert(`Bem-vindo, ${state.currentUser.name}!`, 'success');
-                            loadRestaurantFilters();
-                            loadItemsByFilters();
-                            updateOrderSummary();
+                            loginSuccess(user);
+                        } else {
+                            throw new Error('Usuário não encontrado');
+                        }
+                    } else {
+                        const user = state.users.find(u => u.login === username && u.password === password);
+                        
+                        if (user) {
+                            loginSuccess(user);
                         } else {
                             showAlert('Usuário ou senha incorretos!', 'error');
                         }
-                    } catch (error) {
-                        console.error('Erro ao fazer login:', error);
-                        showAlert('Erro ao conectar com o servidor. Usando modo offline.', 'error');
-                        state.isOnline = false;
-                        // Tentar login com dados locais
-                        attemptLocalLogin(username, password);
                     }
-                } else {
-                    // Modo offline
-                    attemptLocalLogin(username, password);
+                } catch (error) {
+                    console.error('Erro no login:', error);
+                    const user = state.users.find(u => u.login === username && u.password === password);
+                    
+                    if (user) {
+                        loginSuccess(user);
+                    } else {
+                        showAlert('Usuário ou senha incorretos!', 'error');
+                    }
+                } finally {
+                    loginButton.innerHTML = originalHtml;
+                    loginButton.disabled = false;
+                }
+                
+                function loginSuccess(user) {
+                    state.currentUser = {
+                        id: user.id,
+                        name: user[BASEROW_CONFIG.TABLES.USERS.fields.name] || user.name,
+                        login: user[BASEROW_CONFIG.TABLES.USERS.fields.login] || user.login,
+                        password: user[BASEROW_CONFIG.TABLES.USERS.fields.password] || user.password,
+                        level: user[BASEROW_CONFIG.TABLES.USERS.fields.level] || user.level
+                    };
+                    
+                    loginScreen.classList.add('hidden');
+                    app.classList.remove('hidden');
+                    updateUIForUser();
+                    showAlert(`Bem-vindo, ${state.currentUser.name}!`, 'success');
+                    
+                    // CORREÇÃO: Atualizar o select de restaurantes APÓS o login
+                    updateRestaurantSelect();
+                    
+                    loadRestaurantFilters();
+                    loadItemsByFilters();
+                    updateOrderSummary();
+                    
+                    // Sincronizar dados em background
+                    if (state.isOnline) {
+                        setTimeout(() => {
+                            syncDataBackground();
+                        }, 2000);
+                    }
                 }
             });
             
@@ -1351,21 +1613,18 @@
                 updateCurrentOrderUser();
             });
             
-            // Navegação
+            // Navegação - CORREÇÃO: Chamar updateRestaurantSelect quando navegar para a seção de itens
             navLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
                     
-                    // Ativar link clicado
                     navLinks.forEach(l => l.classList.remove('active'));
                     this.classList.add('active');
                     
-                    // Mostrar seção correspondente
                     const section = this.getAttribute('data-section');
                     document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
                     document.getElementById(`${section}-section`).classList.remove('hidden');
                     
-                    // Carregar conteúdo se necessário
                     if (section === 'order') {
                         loadRestaurantFilters();
                         loadItemsByFilters();
@@ -1374,11 +1633,15 @@
                     } else if (section === 'all-orders') {
                         loadAllOrders();
                     } else if (section === 'items') {
+                        // CORREÇÃO: Atualizar select de restaurantes quando acessar a seção de itens
+                        updateRestaurantSelect();
                         loadAdminItems();
                     } else if (section === 'restaurants') {
                         loadRestaurantsTable();
                     } else if (section === 'users') {
                         loadUsersTable();
+                    } else if (section === 'sync') {
+                        loadSyncDashboard();
                     }
                 });
             });
@@ -1386,7 +1649,6 @@
             // Tabs de tipos de itens
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.addEventListener('click', function() {
-                    // Se for uma tab dentro do container de filtros
                     if (this.closest('.filters-container')) {
                         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                         this.classList.add('active');
@@ -1406,7 +1668,6 @@
                     
                     state.orderStatusFilter = this.getAttribute('data-status');
                     
-                    // Atualizar a seção atual
                     const currentSection = document.querySelector('.section:not(.hidden)').id;
                     if (currentSection === 'my-orders-section') {
                         loadMyOrders();
@@ -1423,13 +1684,16 @@
                     return;
                 }
                 
+                const orderNumber = 'PED' + Date.now().toString().slice(-8);
                 const order = {
                     id: Date.now(),
+                    numero_pedido: orderNumber,
                     userId: state.currentUser.id,
                     userName: state.currentUser.name,
                     items: [...state.currentOrder.items],
                     total: state.currentOrder.total,
                     date: new Date().toLocaleString('pt-BR'),
+                    date_iso: new Date().toISOString(),
                     status: 'pending'
                 };
                 
@@ -1437,190 +1701,304 @@
                 state.orders.push(order);
                 state.localData.orders.push(order);
                 
+                // Criar itens do pedido
+                const orderItems = order.items.map((item, index) => ({
+                    id: Date.now() + index,
+                    pedido_id: order.id,
+                    item_id: item.id,
+                    quantidade: 1,
+                    preco_unitario: item.price
+                }));
+                
+                state.orderItems.push(...orderItems);
+                state.localData.orderItems.push(...orderItems);
+                
                 // Tentar salvar no Baserow se online
                 if (state.isOnline) {
                     try {
-                        // Aqui você pode implementar a lógica para salvar no Baserow
-                        // Criar uma tabela de pedidos no Baserow e usar o endpoint correspondente
+                        await saveOrderToBaserow(order, orderItems);
                         showAlert('Pedido salvo no servidor!', 'success');
                     } catch (error) {
-                        console.error('Erro ao salvar pedido no servidor:', error);
-                        showAlert('Pedido salvo localmente (modo offline)', 'warning');
+                        console.error('Erro ao salvar pedido:', error);
+                        state.localData.pendingSync.push({
+                            type: 'order',
+                            data: { order, orderItems },
+                            timestamp: new Date().toISOString()
+                        });
+                        showAlert('Pedido salvo localmente (será sincronizado depois)', 'warning');
                     }
                 } else {
+                    state.localData.pendingSync.push({
+                        type: 'order',
+                        data: { order, orderItems },
+                        timestamp: new Date().toISOString()
+                    });
                     showAlert('Pedido salvo localmente (modo offline)', 'warning');
                 }
                 
-                // Salvar dados localmente
                 saveLocalData();
                 
                 state.currentOrder = { items: [], total: 0 };
                 updateOrderSummary();
                 showAlert('Pedido realizado com sucesso! Status: Pendente', 'success');
                 
-                // Ir para a seção de pedidos
                 document.querySelector('[data-section="my-orders"]').click();
             });
             
-            // Cadastrar item (admin)
-            itemForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const newItem = {
-                    id: Date.now(),
-                    restaurantId: parseInt(document.getElementById('itemRestaurant').value),
-                    type: document.getElementById('itemType').value,
-                    name: document.getElementById('itemName').value,
-                    description: document.getElementById('itemDescription').value,
-                    price: parseFloat(document.getElementById('itemPrice').value)
-                };
-                
-                state.items.push(newItem);
-                state.localData.items.push(newItem);
-                
-                // Tentar salvar no Baserow se online
-                if (state.isOnline && state.currentUser.level === 'admin') {
-                    try {
-                        // Aqui você pode implementar a lógica para salvar itens no Baserow
-                        // Criar uma tabela de itens no Baserow
-                        showAlert('Item salvo no servidor!', 'success');
-                    } catch (error) {
-                        console.error('Erro ao salvar item no servidor:', error);
+            // Cadastrar item (admin) - CORREÇÃO: Melhorar tratamento do formulário
+            if (itemForm) {
+                itemForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const restaurantId = parseInt(document.getElementById('itemRestaurant').value);
+                    const type = document.getElementById('itemType').value;
+                    const name = document.getElementById('itemName').value;
+                    const description = document.getElementById('itemDescription').value;
+                    const price = parseFloat(document.getElementById('itemPrice').value);
+                    
+                    // Validações
+                    if (!restaurantId || restaurantId <= 0) {
+                        showAlert('Selecione um restaurante válido!', 'error');
+                        return;
+                    }
+                    
+                    if (!type) {
+                        showAlert('Selecione um tipo de item!', 'error');
+                        return;
+                    }
+                    
+                    if (!name || name.trim() === '') {
+                        showAlert('Digite o nome do item!', 'error');
+                        return;
+                    }
+                    
+                    if (!description || description.trim() === '') {
+                        showAlert('Digite a descrição do item!', 'error');
+                        return;
+                    }
+                    
+                    if (!price || price <= 0) {
+                        showAlert('Digite um preço válido!', 'error');
+                        return;
+                    }
+                    
+                    const newItem = {
+                        id: Date.now(),
+                        restaurantId: restaurantId,
+                        type: type,
+                        name: name.trim(),
+                        description: description.trim(),
+                        price: price
+                    };
+                    
+                    state.items.push(newItem);
+                    state.localData.items.push(newItem);
+                    
+                    if (state.isOnline && state.currentUser && state.currentUser.level === 'admin') {
+                        try {
+                            await saveItemToBaserow(newItem);
+                            showAlert('Item salvo no servidor!', 'success');
+                        } catch (error) {
+                            console.error('Erro ao salvar item:', error);
+                            state.localData.pendingSync.push({
+                                type: 'item',
+                                data: newItem,
+                                timestamp: new Date().toISOString()
+                            });
+                            showAlert('Item salvo localmente (será sincronizado depois)', 'warning');
+                        }
+                    } else if (state.currentUser && state.currentUser.level === 'admin') {
+                        state.localData.pendingSync.push({
+                            type: 'item',
+                            data: newItem,
+                            timestamp: new Date().toISOString()
+                        });
                         showAlert('Item salvo localmente (modo offline)', 'warning');
                     }
-                }
-                
-                // Salvar dados localmente
-                saveLocalData();
-                
-                itemForm.reset();
-                loadAdminItems();
-                loadRestaurantFilters();
-                showAlert('Item cadastrado com sucesso!', 'success');
-            });
+                    
+                    saveLocalData();
+                    
+                    itemForm.reset();
+                    loadAdminItems();
+                    loadRestaurantFilters();
+                    showAlert('Item cadastrado com sucesso!', 'success');
+                });
+            }
             
             // Cadastrar restaurante (admin)
-            restaurantForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const newRestaurant = {
-                    id: Date.now(),
-                    name: document.getElementById('restaurantName').value,
-                    address: document.getElementById('restaurantAddress').value
-                };
-                
-                state.restaurants.push(newRestaurant);
-                
-                // Tentar salvar no Baserow se online
-                if (state.isOnline && state.currentUser.level === 'admin') {
-                    try {
-                        await saveToBaserow(BASEROW_CONFIG.TABLES.RESTAURANTS.id, {
-                            [BASEROW_CONFIG.TABLES.RESTAURANTS.fields.name]: newRestaurant.name,
-                            [BASEROW_CONFIG.TABLES.RESTAURANTS.fields.address]: newRestaurant.address
-                        });
-                        showAlert('Restaurante salvo no servidor!', 'success');
-                    } catch (error) {
-                        console.error('Erro ao salvar restaurante:', error);
-                        showAlert('Erro ao salvar no servidor. Dados salvos localmente.', 'error');
-                    }
-                }
-                
-                restaurantForm.reset();
-                updateRestaurantSelect();
-                loadRestaurantFilters();
-                loadRestaurantsTable();
-                showAlert('Restaurante cadastrado com sucesso!', 'success');
-            });
-            
-            // Cadastrar usuário (admin)
-            userForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const newUser = {
-                    id: Date.now(),
-                    name: document.getElementById('userNameInput').value,
-                    login: document.getElementById('userLogin').value,
-                    password: document.getElementById('userPassword').value,
-                    level: document.getElementById('userLevelSelect').value
-                };
-                
-                state.users.push(newUser);
-                
-                // Tentar salvar no Baserow se online
-                if (state.isOnline && state.currentUser.level === 'admin') {
-                    try {
-                        await saveToBaserow(BASEROW_CONFIG.TABLES.USERS.id, {
-                            [BASEROW_CONFIG.TABLES.USERS.fields.name]: newUser.name,
-                            [BASEROW_CONFIG.TABLES.USERS.fields.login]: newUser.login,
-                            [BASEROW_CONFIG.TABLES.USERS.fields.password]: newUser.password,
-                            [BASEROW_CONFIG.TABLES.USERS.fields.level]: newUser.level
-                        });
-                        showAlert('Usuário salvo no servidor!', 'success');
-                    } catch (error) {
-                        console.error('Erro ao salvar usuário:', error);
-                        showAlert('Erro ao salvar no servidor. Dados salvos localmente.', 'error');
-                    }
-                }
-                
-                userForm.reset();
-                loadUsersTable();
-                showAlert('Usuário cadastrado com sucesso!', 'success');
-            });
-            
-            // Editar usuário (admin)
-            editUserForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const userId = parseInt(document.getElementById('editUserId').value);
-                const userIndex = state.users.findIndex(u => u.id === userId);
-                
-                if (userIndex >= 0) {
-                    const user = state.users[userIndex];
-                    user.name = document.getElementById('editUserName').value;
-                    user.login = document.getElementById('editUserLogin').value;
+            if (restaurantForm) {
+                restaurantForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
                     
-                    const newPassword = document.getElementById('editUserPassword').value;
-                    if (newPassword) {
-                        user.password = newPassword;
+                    const name = document.getElementById('restaurantName').value.trim();
+                    const address = document.getElementById('restaurantAddress').value.trim();
+                    
+                    if (!name) {
+                        showAlert('Digite o nome do restaurante!', 'error');
+                        return;
                     }
                     
-                    user.level = document.getElementById('editUserLevel').value;
+                    if (!address) {
+                        showAlert('Digite o endereço do restaurante!', 'error');
+                        return;
+                    }
                     
-                    // Atualizar no Baserow se online
-                    if (state.isOnline && state.currentUser.level === 'admin') {
+                    const newRestaurant = {
+                        id: Date.now(),
+                        name: name,
+                        address: address
+                    };
+                    
+                    state.restaurants.push(newRestaurant);
+                    
+                    if (state.isOnline && state.currentUser && state.currentUser.level === 'admin') {
                         try {
-                            await updateInBaserow(BASEROW_CONFIG.TABLES.USERS.id, userId, {
-                                [BASEROW_CONFIG.TABLES.USERS.fields.name]: user.name,
-                                [BASEROW_CONFIG.TABLES.USERS.fields.login]: user.login,
-                                [BASEROW_CONFIG.TABLES.USERS.fields.password]: user.password,
-                                [BASEROW_CONFIG.TABLES.USERS.fields.level]: user.level
+                            await saveToBaserow(BASEROW_CONFIG.TABLES.RESTAURANTS.id, {
+                                [BASEROW_CONFIG.TABLES.RESTAURANTS.fields.name]: newRestaurant.name,
+                                [BASEROW_CONFIG.TABLES.RESTAURANTS.fields.address]: newRestaurant.address
                             });
-                            showAlert('Usuário atualizado no servidor!', 'success');
+                            showAlert('Restaurante salvo no servidor!', 'success');
                         } catch (error) {
-                            console.error('Erro ao atualizar usuário:', error);
-                            showAlert('Erro ao atualizar no servidor. Alterações salvas localmente.', 'error');
+                            console.error('Erro ao salvar restaurante:', error);
+                            showAlert('Erro ao salvar no servidor. Dados salvos localmente.', 'error');
                         }
                     }
                     
-                    loadUsersTable();
-                    closeEditUserModal();
-                    showAlert('Usuário atualizado com sucesso!', 'success');
-                }
-            });
+                    restaurantForm.reset();
+                    updateRestaurantSelect();
+                    loadRestaurantFilters();
+                    loadRestaurantsTable();
+                    showAlert('Restaurante cadastrado com sucesso!', 'success');
+                });
+            }
             
-            // Permitir login com Enter
+            // Cadastrar usuário (admin)
+            if (userForm) {
+                userForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const name = document.getElementById('userNameInput').value.trim();
+                    const login = document.getElementById('userLogin').value.trim();
+                    const password = document.getElementById('userPassword').value;
+                    const level = document.getElementById('userLevelSelect').value;
+                    
+                    if (!name) {
+                        showAlert('Digite o nome do usuário!', 'error');
+                        return;
+                    }
+                    
+                    if (!login) {
+                        showAlert('Digite o login do usuário!', 'error');
+                        return;
+                    }
+                    
+                    if (!password) {
+                        showAlert('Digite a senha do usuário!', 'error');
+                        return;
+                    }
+                    
+                    if (!level) {
+                        showAlert('Selecione o nível de acesso!', 'error');
+                        return;
+                    }
+                    
+                    const newUser = {
+                        id: Date.now(),
+                        name: name,
+                        login: login,
+                        password: password,
+                        level: level
+                    };
+                    
+                    state.users.push(newUser);
+                    
+                    if (state.isOnline && state.currentUser && state.currentUser.level === 'admin') {
+                        try {
+                            await saveToBaserow(BASEROW_CONFIG.TABLES.USERS.id, {
+                                [BASEROW_CONFIG.TABLES.USERS.fields.name]: newUser.name,
+                                [BASEROW_CONFIG.TABLES.USERS.fields.login]: newUser.login,
+                                [BASEROW_CONFIG.TABLES.USERS.fields.password]: newUser.password,
+                                [BASEROW_CONFIG.TABLES.USERS.fields.level]: newUser.level
+                            });
+                            showAlert('Usuário salvo no servidor!', 'success');
+                        } catch (error) {
+                            console.error('Erro ao salvar usuário:', error);
+                            showAlert('Erro ao salvar no servidor. Dados salvos localmente.', 'error');
+                        }
+                    }
+                    
+                    userForm.reset();
+                    loadUsersTable();
+                    showAlert('Usuário cadastrado com sucesso!', 'success');
+                });
+            }
+            
+            // Editar usuário (admin)
+            if (editUserForm) {
+                editUserForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const userId = parseInt(document.getElementById('editUserId').value);
+                    const userIndex = state.users.findIndex(u => u.id === userId);
+                    
+                    if (userIndex >= 0) {
+                        const user = state.users[userIndex];
+                        user.name = document.getElementById('editUserName').value;
+                        user.login = document.getElementById('editUserLogin').value;
+                        
+                        const newPassword = document.getElementById('editUserPassword').value;
+                        if (newPassword) {
+                            user.password = newPassword;
+                        }
+                        
+                        user.level = document.getElementById('editUserLevel').value;
+                        
+                        if (state.isOnline && state.currentUser && state.currentUser.level === 'admin') {
+                            try {
+                                await updateInBaserow(BASEROW_CONFIG.TABLES.USERS.id, userId, {
+                                    [BASEROW_CONFIG.TABLES.USERS.fields.name]: user.name,
+                                    [BASEROW_CONFIG.TABLES.USERS.fields.login]: user.login,
+                                    [BASEROW_CONFIG.TABLES.USERS.fields.password]: user.password,
+                                    [BASEROW_CONFIG.TABLES.USERS.fields.level]: user.level
+                                });
+                                showAlert('Usuário atualizado no servidor!', 'success');
+                            } catch (error) {
+                                console.error('Erro ao atualizar usuário:', error);
+                                showAlert('Erro ao atualizar no servidor. Alterações salvas localmente.', 'error');
+                            }
+                        }
+                        
+                        loadUsersTable();
+                        closeEditUserModal();
+                        showAlert('Usuário atualizado com sucesso!', 'success');
+                    }
+                });
+            }
+            
             loginPassword.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     loginButton.click();
                 }
             });
+            
+            // Sincronização automática
+            setInterval(() => {
+                if (state.isOnline && state.currentUser) {
+                    syncDataBackground();
+                }
+            }, 5 * 60 * 1000);
         });
         
-        // Funções de integração com Baserow
+        // ========== FUNÇÕES DE INTEGRAÇÃO BASEROW ==========
+        
         async function fetchBaserowData(tableId) {
+            if (!tableId) {
+                throw new Error('Table ID não configurado');
+            }
+            
             try {
                 const response = await fetch(
-                    `${BASEROW_CONFIG.BASE_URL}${tableId}/?user_field_names=true`,
+                    `${BASEROW_CONFIG.BASE_URL}${tableId}/?user_field_names=true&size=200`,
                     {
                         headers: {
                             'Authorization': `Token ${BASEROW_CONFIG.TOKEN}`
@@ -1635,7 +2013,7 @@
                 const data = await response.json();
                 return data.results;
             } catch (error) {
-                console.error('Erro ao buscar dados do Baserow:', error);
+                console.error(`Erro ao buscar dados da tabela ${tableId}:`, error);
                 state.isOnline = false;
                 throw error;
             }
@@ -1656,12 +2034,16 @@
                 );
                 
                 if (!response.ok) {
-                    throw new Error(`Erro HTTP: ${response.status}`);
+                    const errorText = await response.text();
+                    throw new Error(`Erro HTTP ${response.status}: ${errorText}`);
                 }
                 
-                return await response.json();
+                const result = await response.json();
+                addToSyncLog(`✅ Dados salvos na tabela ${tableId}`, 'success');
+                return result;
             } catch (error) {
                 console.error('Erro ao salvar no Baserow:', error);
+                addToSyncLog(`❌ Erro ao salvar na tabela ${tableId}: ${error.message}`, 'error');
                 throw error;
             }
         }
@@ -1684,15 +2066,151 @@
                     throw new Error(`Erro HTTP: ${response.status}`);
                 }
                 
-                return await response.json();
+                const result = await response.json();
+                addToSyncLog(`✅ Dados atualizados na tabela ${tableId} (ID: ${rowId})`, 'success');
+                return result;
             } catch (error) {
                 console.error('Erro ao atualizar no Baserow:', error);
+                addToSyncLog(`❌ Erro ao atualizar na tabela ${tableId}: ${error.message}`, 'error');
                 throw error;
             }
         }
         
-        // Carregar usuários do Baserow
-        async function loadUsersFromBaserow() {
+        async function deleteFromBaserow(tableId, rowId) {
+            try {
+                const response = await fetch(
+                    `${BASEROW_CONFIG.BASE_URL}${tableId}/${rowId}/`,
+                    {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Token ${BASEROW_CONFIG.TOKEN}`
+                        }
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+                
+                addToSyncLog(`✅ Dados excluídos da tabela ${tableId} (ID: ${rowId})`, 'success');
+                return true;
+            } catch (error) {
+                console.error('Erro ao excluir do Baserow:', error);
+                addToSyncLog(`❌ Erro ao excluir da tabela ${tableId}: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+        
+        // Salvar item no Baserow
+        async function saveItemToBaserow(item) {
+            if (!BASEROW_CONFIG.TABLES.ITEMS.id) {
+                throw new Error('ID da tabela de itens não configurado');
+            }
+            
+            const itemData = {
+                [BASEROW_CONFIG.TABLES.ITEMS.fields.name]: item.name,
+                [BASEROW_CONFIG.TABLES.ITEMS.fields.description]: item.description,
+                [BASEROW_CONFIG.TABLES.ITEMS.fields.type]: item.type,
+                [BASEROW_CONFIG.TABLES.ITEMS.fields.price]: item.price.toFixed(2),
+                [BASEROW_CONFIG.TABLES.ITEMS.fields.restaurant_id]: item.restaurantId
+            };
+            
+            return await saveToBaserow(BASEROW_CONFIG.TABLES.ITEMS.id, itemData);
+        }
+        
+        // Salvar pedido no Baserow
+        async function saveOrderToBaserow(order, orderItems) {
+            if (!BASEROW_CONFIG.TABLES.ORDERS.id || !BASEROW_CONFIG.TABLES.ORDER_ITEMS.id) {
+                throw new Error('IDs das tabelas de pedidos não configurados');
+            }
+            
+            // Salvar pedido principal
+            const orderData = {
+                [BASEROW_CONFIG.TABLES.ORDERS.fields.order_number]: order.numero_pedido,
+                [BASEROW_CONFIG.TABLES.ORDERS.fields.user_id]: order.userId,
+                [BASEROW_CONFIG.TABLES.ORDERS.fields.date]: order.date_iso,
+                [BASEROW_CONFIG.TABLES.ORDERS.fields.status]: order.status,
+                [BASEROW_CONFIG.TABLES.ORDERS.fields.total]: order.total.toFixed(2)
+            };
+            
+            const savedOrder = await saveToBaserow(BASEROW_CONFIG.TABLES.ORDERS.id, orderData);
+            
+            // Salvar itens do pedido
+            for (const item of orderItems) {
+                const orderItemData = {
+                    [BASEROW_CONFIG.TABLES.ORDER_ITEMS.fields.order_id]: savedOrder.id,
+                    [BASEROW_CONFIG.TABLES.ORDER_ITEMS.fields.item_id]: item.item_id,
+                    [BASEROW_CONFIG.TABLES.ORDER_ITEMS.fields.quantity]: item.quantidade,
+                    [BASEROW_CONFIG.TABLES.ORDER_ITEMS.fields.unit_price]: item.preco_unitario.toFixed(2)
+                };
+                
+                await saveToBaserow(BASEROW_CONFIG.TABLES.ORDER_ITEMS.id, orderItemData);
+            }
+            
+            return savedOrder;
+        }
+        
+        // ========== FUNÇÕES DE SINCRONIZAÇÃO ==========
+        
+        async function syncDataBackground() {
+            if (!state.isOnline) return;
+            
+            try {
+                addToSyncLog('🔄 Iniciando sincronização em background...', 'info');
+                
+                await syncPendingData();
+                
+                await Promise.all([
+                    syncUsersFromServer(),
+                    syncRestaurantsFromServer(),
+                    syncItemsFromServer(),
+                    syncOrdersFromServer()
+                ]);
+                
+                // CORREÇÃO: Atualizar o select de restaurantes após sincronização
+                updateRestaurantSelect();
+                
+                addToSyncLog('✅ Sincronização em background concluída', 'success');
+                updateSyncDashboard();
+            } catch (error) {
+                console.error('Erro na sincronização:', error);
+                addToSyncLog(`❌ Erro na sincronização: ${error.message}`, 'error');
+            }
+        }
+        
+        async function syncPendingData() {
+            if (state.localData.pendingSync.length === 0) return;
+            
+            addToSyncLog(`📦 Sincronizando ${state.localData.pendingSync.length} itens pendentes...`, 'info');
+            
+            const successfulSyncs = [];
+            
+            for (let i = state.localData.pendingSync.length - 1; i >= 0; i--) {
+                const pending = state.localData.pendingSync[i];
+                
+                try {
+                    if (pending.type === 'order') {
+                        await saveOrderToBaserow(pending.data.order, pending.data.orderItems);
+                    } else if (pending.type === 'item') {
+                        await saveItemToBaserow(pending.data);
+                    }
+                    
+                    successfulSyncs.push(i);
+                    addToSyncLog(`✅ ${pending.type} sincronizado com sucesso`, 'success');
+                } catch (error) {
+                    console.error(`Erro ao sincronizar ${pending.type}:`, error);
+                    addToSyncLog(`❌ Erro ao sincronizar ${pending.type}`, 'error');
+                }
+            }
+            
+            successfulSyncs.forEach(index => {
+                state.localData.pendingSync.splice(index, 1);
+            });
+            
+            saveLocalData();
+        }
+        
+        async function syncUsersFromServer() {
             try {
                 const users = await fetchBaserowData(BASEROW_CONFIG.TABLES.USERS.id);
                 state.users = users.map(user => ({
@@ -1702,19 +2220,13 @@
                     password: user[BASEROW_CONFIG.TABLES.USERS.fields.password],
                     level: user[BASEROW_CONFIG.TABLES.USERS.fields.level]
                 }));
-                console.log('Usuários carregados do Baserow:', state.users);
+                addToSyncLog(`✅ ${state.users.length} usuários sincronizados`, 'success');
             } catch (error) {
-                console.log('Usando dados locais para usuários');
-                // Carregar usuários padrão em caso de erro
-                state.users = [
-                    { id: 1, name: "Administrador", login: "admin", password: "motos2026", level: "admin" },
-                    { id: 2, name: "Operador", login: "operador", password: "operador123", level: "operator" }
-                ];
+                addToSyncLog(`❌ Erro ao sincronizar usuários: ${error.message}`, 'error');
             }
         }
         
-        // Carregar restaurantes do Baserow
-        async function loadRestaurantsFromBaserow() {
+        async function syncRestaurantsFromServer() {
             try {
                 const restaurants = await fetchBaserowData(BASEROW_CONFIG.TABLES.RESTAURANTS.id);
                 state.restaurants = restaurants.map(restaurant => ({
@@ -1722,59 +2234,491 @@
                     name: restaurant[BASEROW_CONFIG.TABLES.RESTAURANTS.fields.name],
                     address: restaurant[BASEROW_CONFIG.TABLES.RESTAURANTS.fields.address]
                 }));
-                console.log('Restaurantes carregados do Baserow:', state.restaurants);
-                
-                // Atualizar select de restaurantes
-                updateRestaurantSelect();
+                addToSyncLog(`✅ ${state.restaurants.length} restaurantes sincronizados`, 'success');
             } catch (error) {
-                console.log('Usando dados locais para restaurantes');
-                // Carregar restaurantes padrão em caso de erro
+                addToSyncLog(`❌ Erro ao sincronizar restaurantes: ${error.message}`, 'error');
+            }
+        }
+        
+        async function syncItemsFromServer() {
+            if (!BASEROW_CONFIG.TABLES.ITEMS.id) {
+                addToSyncLog('⚠️ Tabela de itens não configurada', 'warning');
+                return;
+            }
+            
+            try {
+                const items = await fetchBaserowData(BASEROW_CONFIG.TABLES.ITEMS.id);
+                state.items = items.map(item => ({
+                    id: item.id,
+                    restaurantId: item[BASEROW_CONFIG.TABLES.ITEMS.fields.restaurant_id],
+                    type: item[BASEROW_CONFIG.TABLES.ITEMS.fields.type],
+                    name: item[BASEROW_CONFIG.TABLES.ITEMS.fields.name],
+                    description: item[BASEROW_CONFIG.TABLES.ITEMS.fields.description],
+                    price: parseFloat(item[BASEROW_CONFIG.TABLES.ITEMS.fields.price])
+                }));
+                
+                // Atualizar dados locais
+                state.localData.items = [...state.items];
+                saveLocalData();
+                
+                addToSyncLog(`✅ ${state.items.length} itens sincronizados`, 'success');
+            } catch (error) {
+                addToSyncLog(`❌ Erro ao sincronizar itens: ${error.message}`, 'error');
+            }
+        }
+        
+        async function syncOrdersFromServer() {
+            if (!BASEROW_CONFIG.TABLES.ORDERS.id || !BASEROW_CONFIG.TABLES.ORDER_ITEMS.id) {
+                addToSyncLog('⚠️ Tabelas de pedidos não configuradas', 'warning');
+                return;
+            }
+            
+            try {
+                const orders = await fetchBaserowData(BASEROW_CONFIG.TABLES.ORDERS.id);
+                const orderItems = await fetchBaserowData(BASEROW_CONFIG.TABLES.ORDER_ITEMS.id);
+                
+                state.orders = orders.map(order => ({
+                    id: order.id,
+                    numero_pedido: order[BASEROW_CONFIG.TABLES.ORDERS.fields.order_number],
+                    userId: order[BASEROW_CONFIG.TABLES.ORDERS.fields.user_id],
+                    userName: 'Cliente',
+                    total: parseFloat(order[BASEROW_CONFIG.TABLES.ORDERS.fields.total]),
+                    date: new Date(order[BASEROW_CONFIG.TABLES.ORDERS.fields.date]).toLocaleString('pt-BR'),
+                    date_iso: order[BASEROW_CONFIG.TABLES.ORDERS.fields.date],
+                    status: order[BASEROW_CONFIG.TABLES.ORDERS.fields.status]
+                }));
+                
+                state.orderItems = orderItems.map(item => ({
+                    id: item.id,
+                    pedido_id: item[BASEROW_CONFIG.TABLES.ORDER_ITEMS.fields.order_id],
+                    item_id: item[BASEROW_CONFIG.TABLES.ORDER_ITEMS.fields.item_id],
+                    quantidade: item[BASEROW_CONFIG.TABLES.ORDER_ITEMS.fields.quantity],
+                    preco_unitario: parseFloat(item[BASEROW_CONFIG.TABLES.ORDER_ITEMS.fields.unit_price])
+                }));
+                
+                addToSyncLog(`✅ ${state.orders.length} pedidos sincronizados`, 'success');
+            } catch (error) {
+                addToSyncLog(`❌ Erro ao sincronizar pedidos: ${error.message}`, 'error');
+            }
+        }
+        
+        // ========== FUNÇÕES DE CONTROLE DE SINCRONIZAÇÃO ==========
+        
+        window.forceSync = async function() {
+            if (!state.isOnline) {
+                showAlert('Você está offline. Conecte-se à internet para sincronizar.', 'error');
+                return;
+            }
+            
+            const syncButton = document.getElementById('syncButton');
+            const originalHtml = syncButton.innerHTML;
+            syncButton.innerHTML = '<div class="spinner"></div>';
+            syncButton.disabled = true;
+            
+            try {
+                await syncAllData();
+                showAlert('Sincronização concluída com sucesso!', 'success');
+            } catch (error) {
+                showAlert('Erro na sincronização: ' + error.message, 'error');
+            } finally {
+                syncButton.innerHTML = originalHtml;
+                syncButton.disabled = false;
+            }
+        };
+        
+        async function syncAllData() {
+            addToSyncLog('🔄 Iniciando sincronização completa...', 'info');
+            
+            await Promise.all([
+                syncUsers(),
+                syncRestaurants(),
+                syncItems(),
+                syncOrders(),
+                syncPendingData()
+            ]);
+            
+            // CORREÇÃO: Atualizar o select após sincronização completa
+            updateRestaurantSelect();
+            
+            addToSyncLog('✅ Sincronização completa concluída', 'success');
+            updateSyncDashboard();
+        }
+        
+        window.syncUsers = async function() {
+            addToSyncLog('🔄 Sincronizando usuários...', 'info');
+            await syncUsersFromServer();
+            loadUsersTable();
+        };
+        
+        window.syncRestaurants = async function() {
+            addToSyncLog('🔄 Sincronizando restaurantes...', 'info');
+            await syncRestaurantsFromServer();
+            updateRestaurantSelect();
+            loadRestaurantFilters();
+            loadRestaurantsTable();
+        };
+        
+        window.syncItems = async function() {
+            addToSyncLog('🔄 Sincronizando itens...', 'info');
+            await syncItemsFromServer();
+            loadAdminItems();
+            loadItemsByFilters();
+        };
+        
+        window.syncOrders = async function() {
+            addToSyncLog('🔄 Sincronizando pedidos...', 'info');
+            await syncOrdersFromServer();
+            loadMyOrders();
+            loadAllOrders();
+        };
+        
+        // ========== FUNÇÕES DE LOG DE SINCRONIZAÇÃO ==========
+        
+        function addToSyncLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('pt-BR');
+            const logEntry = {
+                timestamp,
+                message,
+                type
+            };
+            
+            state.syncLog.unshift(logEntry);
+            
+            if (state.syncLog.length > 100) {
+                state.syncLog.pop();
+            }
+            
+            if (document.getElementById('sync-section') && !document.getElementById('sync-section').classList.contains('hidden')) {
+                displaySyncLog();
+            }
+        }
+        
+        function displaySyncLog() {
+            const logContainer = document.getElementById('syncLog');
+            if (!logContainer) return;
+            
+            if (state.syncLog.length === 0) {
+                logContainer.innerHTML = '<div style="color: #aaa; text-align: center; padding: 20px;">Nenhuma atividade de sincronização ainda.</div>';
+                return;
+            }
+            
+            logContainer.innerHTML = state.syncLog.map(entry => {
+                const color = entry.type === 'success' ? 'var(--success)' : 
+                             entry.type === 'error' ? 'var(--danger)' : 
+                             entry.type === 'warning' ? 'var(--warning)' : 'var(--primary)';
+                
+                return `
+                    <div class="log-entry">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: ${color}; font-weight: 600;">${entry.message}</span>
+                            <span class="log-timestamp">${entry.timestamp}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        window.clearSyncLog = function() {
+            if (confirm('Tem certeza que deseja limpar o log de sincronização?')) {
+                state.syncLog = [];
+                displaySyncLog();
+                showAlert('Log de sincronização limpo', 'success');
+            }
+        };
+        
+        window.exportSyncLog = function() {
+            const logText = state.syncLog.map(entry => 
+                `[${entry.timestamp}] ${entry.message}`
+            ).join('\n');
+            
+            const blob = new Blob([logText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `sync-log-${new Date().toISOString().slice(0, 10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showAlert('Log exportado com sucesso', 'success');
+        };
+        
+        // ========== FUNÇÕES DE DASHBOARD DE SINCRONIZAÇÃO ==========
+        
+        function loadSyncDashboard() {
+            updateSyncDashboard();
+            displaySyncLog();
+        }
+        
+        function updateSyncDashboard() {
+            const statusIndicator = document.getElementById('syncStatusIndicator');
+            const statusText = document.getElementById('syncStatusText');
+            const lastUpdate = document.getElementById('syncLastUpdate');
+            
+            if (state.isOnline) {
+                statusIndicator.className = 'status-indicator status-online';
+                statusText.textContent = 'Conectado ao Baserow';
+                statusText.style.color = 'var(--success)';
+            } else {
+                statusIndicator.className = 'status-indicator status-offline';
+                statusText.textContent = 'Modo Offline';
+                statusText.style.color = 'var(--warning)';
+            }
+            
+            document.getElementById('statUsers').textContent = state.users.length;
+            document.getElementById('statRestaurants').textContent = state.restaurants.length;
+            document.getElementById('statItems').textContent = state.items.length;
+            document.getElementById('statOrders').textContent = state.orders.length;
+            document.getElementById('statPending').textContent = state.localData.pendingSync.length;
+            
+            const lastSync = state.syncLog.find(entry => entry.type === 'success');
+            if (lastSync) {
+                lastUpdate.textContent = `Última sincronização: ${lastSync.timestamp}`;
+            } else {
+                lastUpdate.textContent = 'Última sincronização: Nunca';
+            }
+            
+            const syncText = document.getElementById('syncText');
+            if (state.localData.pendingSync.length > 0) {
+                syncText.innerHTML = `Online <span class="badge-sync">${state.localData.pendingSync.length} pendente(s)</span>`;
+            } else {
+                syncText.textContent = state.isOnline ? 'Online' : 'Offline';
+            }
+        }
+        
+        // ========== FUNÇÕES DE TESTE DE CONEXÃO ==========
+        
+        async function testBaserowConnection() {
+            addToSyncLog('🔌 Testando conexão com Baserow...', 'info');
+            
+            try {
+                // Testar conexão com a tabela de usuários
+                const response = await fetch(
+                    `${BASEROW_CONFIG.BASE_URL}${BASEROW_CONFIG.TABLES.USERS.id}/?user_field_names=true&size=1`,
+                    {
+                        headers: {
+                            'Authorization': `Token ${BASEROW_CONFIG.TOKEN}`
+                        }
+                    }
+                );
+                
+                if (response.ok) {
+                    addToSyncLog('✅ Conexão com Baserow estabelecida com sucesso!', 'success');
+                    showAlert('Conexão com Baserow funcionando perfeitamente!', 'success');
+                    
+                    // Testar todas as tabelas
+                    await testAllTables();
+                } else {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+            } catch (error) {
+                addToSyncLog(`❌ Falha na conexão com Baserow: ${error.message}`, 'error');
+                showAlert(`Erro na conexão: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testAllTables() {
+            const tables = [
+                { name: 'Usuários', id: BASEROW_CONFIG.TABLES.USERS.id },
+                { name: 'Restaurantes', id: BASEROW_CONFIG.TABLES.RESTAURANTS.id },
+                { name: 'Itens Menu', id: BASEROW_CONFIG.TABLES.ITEMS.id },
+                { name: 'Pedidos', id: BASEROW_CONFIG.TABLES.ORDERS.id },
+                { name: 'Itens Pedido', id: BASEROW_CONFIG.TABLES.ORDER_ITEMS.id }
+            ];
+            
+            for (const table of tables) {
+                try {
+                    const response = await fetch(
+                        `${BASEROW_CONFIG.BASE_URL}${table.id}/?user_field_names=true&size=1`,
+                        {
+                            headers: {
+                                'Authorization': `Token ${BASEROW_CONFIG.TOKEN}`
+                            }
+                        }
+                    );
+                    
+                    if (response.ok) {
+                        addToSyncLog(`✅ Tabela "${table.name}" acessível`, 'success');
+                    } else {
+                        addToSyncLog(`⚠️ Tabela "${table.name}" com problemas`, 'warning');
+                    }
+                } catch (error) {
+                    addToSyncLog(`❌ Erro na tabela "${table.name}"`, 'error');
+                }
+            }
+        }
+        
+        // ========== FUNÇÕES AUXILIARES ==========
+        
+        function updateConnectionStatus() {
+            const statusText = document.getElementById('statusText');
+            const connectionStatus = document.getElementById('connectionStatus');
+            
+            if (navigator.onLine) {
+                statusText.textContent = 'Conectado ao servidor';
+                statusText.style.color = 'var(--success)';
+                connectionStatus.style.border = '1px solid var(--success)';
+            } else {
+                statusText.textContent = 'Modo offline (dados locais)';
+                statusText.style.color = 'var(--warning)';
+                connectionStatus.style.border = '1px solid var(--warning)';
+            }
+        }
+        
+        function checkConnectivity() {
+            state.isOnline = navigator.onLine;
+            
+            window.addEventListener('online', () => {
+                state.isOnline = true;
+                updateConnectionStatus();
+                updateUIForUser();
+                showAlert('Conexão restaurada! Sincronizando dados...', 'success');
+                setTimeout(() => syncDataBackground(), 1000);
+            });
+            
+            window.addEventListener('offline', () => {
+                state.isOnline = false;
+                updateConnectionStatus();
+                updateUIForUser();
+                showAlert('Modo offline ativado. Trabalhando com dados locais.', 'warning');
+            });
+            
+            setInterval(() => {
+                const wasOnline = state.isOnline;
+                state.isOnline = navigator.onLine;
+                
+                if (wasOnline !== state.isOnline) {
+                    updateConnectionStatus();
+                    updateUIForUser();
+                    
+                    if (state.isOnline) {
+                        showAlert('Conexão restaurada!', 'success');
+                        setTimeout(() => syncDataBackground(), 1000);
+                    } else {
+                        showAlert('Conexão perdida. Modo offline.', 'warning');
+                    }
+                }
+            }, 5000);
+        }
+        
+        async function initializeData() {
+            loadLocalData();
+            
+            if (state.isOnline) {
+                try {
+                    await Promise.all([
+                        loadUsersFromBaserow(),
+                        loadRestaurantsFromBaserow(),
+                        loadItemsFromBaserow()
+                    ]);
+                    addToSyncLog('✅ Dados iniciais carregados do Baserow', 'success');
+                } catch (error) {
+                    console.log('Usando dados locais');
+                    loadDefaultData();
+                }
+            } else {
+                loadDefaultData();
+            }
+        }
+        
+        async function loadUsersFromBaserow() {
+            const users = await fetchBaserowData(BASEROW_CONFIG.TABLES.USERS.id);
+            state.users = users.map(user => ({
+                id: user.id,
+                name: user[BASEROW_CONFIG.TABLES.USERS.fields.name],
+                login: user[BASEROW_CONFIG.TABLES.USERS.fields.login],
+                password: user[BASEROW_CONFIG.TABLES.USERS.fields.password],
+                level: user[BASEROW_CONFIG.TABLES.USERS.fields.level]
+            }));
+        }
+        
+        async function loadRestaurantsFromBaserow() {
+            const restaurants = await fetchBaserowData(BASEROW_CONFIG.TABLES.RESTAURANTS.id);
+            state.restaurants = restaurants.map(restaurant => ({
+                id: restaurant.id,
+                name: restaurant[BASEROW_CONFIG.TABLES.RESTAURANTS.fields.name],
+                address: restaurant[BASEROW_CONFIG.TABLES.RESTAURANTS.fields.address]
+            }));
+        }
+        
+        async function loadItemsFromBaserow() {
+            if (!BASEROW_CONFIG.TABLES.ITEMS.id) {
+                if (state.localData.items.length > 0) {
+                    state.items = [...state.localData.items];
+                }
+                return;
+            }
+            
+            try {
+                const items = await fetchBaserowData(BASEROW_CONFIG.TABLES.ITEMS.id);
+                state.items = items.map(item => ({
+                    id: item.id,
+                    restaurantId: item[BASEROW_CONFIG.TABLES.ITEMS.fields.restaurant_id],
+                    type: item[BASEROW_CONFIG.TABLES.ITEMS.fields.type],
+                    name: item[BASEROW_CONFIG.TABLES.ITEMS.fields.name],
+                    description: item[BASEROW_CONFIG.TABLES.ITEMS.fields.description],
+                    price: parseFloat(item[BASEROW_CONFIG.TABLES.ITEMS.fields.price])
+                }));
+                
+                state.localData.items = [...state.items];
+                saveLocalData();
+            } catch (error) {
+                console.error('Erro ao carregar itens:', error);
+                if (state.localData.items.length > 0) {
+                    state.items = [...state.localData.items];
+                }
+            }
+        }
+        
+        function loadDefaultData() {
+            if (state.users.length === 0) {
+                state.users = [
+                    { id: 1, name: "Administrador", login: "admin", password: "motos2026", level: "admin" },
+                    { id: 2, name: "Operador", login: "operador", password: "operador123", level: "operator" }
+                ];
+            }
+            
+            if (state.restaurants.length === 0) {
                 state.restaurants = [
                     { id: 1, name: "Quantum Steakhouse", address: "Av. Tecnológica, 123 - Centro" },
                     { id: 2, name: "Nexus Sushi", address: "R. Holográfica, 456 - Nova Era" },
                     { id: 3, name: "Cyber Pizzeria", address: "R. Digital, 789 - Setor Futuro" }
                 ];
-                updateRestaurantSelect();
+            }
+            
+            if (state.items.length === 0 && state.localData.items.length === 0) {
+                state.items = [
+                    {
+                        id: 1,
+                        restaurantId: 1,
+                        type: "almoco",
+                        name: "Filé Mignon Quantico",
+                        description: "Filé mignon grelhado com molho de vinho tinto e acompanhamentos futuristas",
+                        price: 89.90
+                    },
+                    {
+                        id: 2,
+                        restaurantId: 2,
+                        type: "almoco",
+                        name: "Combinado Nexus",
+                        description: "Sushi e sashimi selecionados com toques tecnológicos",
+                        price: 65.50
+                    },
+                    {
+                        id: 3,
+                        restaurantId: 3,
+                        type: "lanche",
+                        name: "Pizza Holográfica",
+                        description: "Pizza com ingredientes que mudam de sabor conforme cada fatia",
+                        price: 49.90
+                    }
+                ];
+                state.localData.items = [...state.items];
+                saveLocalData();
             }
         }
         
-        // Verificar conectividade
-        function checkConnectivity() {
-            state.isOnline = navigator.onLine;
-            
-            // Adicionar listeners para mudanças de conectividade
-            window.addEventListener('online', () => {
-                state.isOnline = true;
-                showAlert('Conexão restaurada! Sincronizando dados...', 'success');
-                // Sincronizar dados quando a conexão voltar
-                syncData();
-            });
-            
-            window.addEventListener('offline', () => {
-                state.isOnline = false;
-                showAlert('Modo offline ativado. Trabalhando com dados locais.', 'warning');
-            });
-        }
-        
-        // Tentar login com dados locais
-        function attemptLocalLogin(username, password) {
-            const user = state.users.find(u => u.login === username && u.password === password);
-            
-            if (user) {
-                state.currentUser = user;
-                loginScreen.classList.add('hidden');
-                app.classList.remove('hidden');
-                updateUIForUser();
-                showAlert(`Bem-vindo, ${user.name}! (Modo Offline)`, 'success');
-                loadRestaurantFilters();
-                loadItemsByFilters();
-                updateOrderSummary();
-            } else {
-                showAlert('Usuário ou senha incorretos!', 'error');
-            }
-        }
-        
-        // Carregar dados locais
         function loadLocalData() {
             const savedData = localStorage.getItem('2m_motos_system_data');
             if (savedData) {
@@ -1782,15 +2726,19 @@
                     const data = JSON.parse(savedData);
                     state.localData.items = data.items || [];
                     state.localData.orders = data.orders || [];
+                    state.localData.orderItems = data.orderItems || [];
+                    state.localData.pendingSync = data.pendingSync || [];
                     
-                    // Combinar itens locais com os carregados
                     if (state.localData.items.length > 0) {
                         state.items = [...state.localData.items];
                     }
                     
-                    // Carregar pedidos locais
                     if (state.localData.orders.length > 0) {
                         state.orders = [...state.localData.orders];
+                    }
+                    
+                    if (state.localData.orderItems.length > 0) {
+                        state.orderItems = [...state.localData.orderItems];
                     }
                 } catch (error) {
                     console.error('Erro ao carregar dados locais:', error);
@@ -1798,11 +2746,12 @@
             }
         }
         
-        // Salvar dados localmente
         function saveLocalData() {
             const dataToSave = {
                 items: state.localData.items,
                 orders: state.localData.orders,
+                orderItems: state.localData.orderItems,
+                pendingSync: state.localData.pendingSync,
                 lastSync: new Date().toISOString()
             };
             
@@ -1813,20 +2762,42 @@
             }
         }
         
-        // Sincronizar dados quando online
-        async function syncData() {
-            if (!state.isOnline) return;
+        // ========== FUNÇÕES DE UI ==========
+        
+        function updateUIForUser() {
+            if (!state.currentUser) return;
             
-            try {
-                // Aqui você pode implementar a lógica de sincronização
-                // Sincronizar pedidos, itens, etc.
-                showAlert('Dados sincronizados com sucesso!', 'success');
-            } catch (error) {
-                console.error('Erro na sincronização:', error);
+            const user = state.currentUser;
+            
+            document.getElementById('userName').textContent = user.name;
+            document.getElementById('userLevel').textContent = user.level === 'admin' ? 'Administrador' : 'Operador';
+            document.getElementById('userAvatar').textContent = user.name.charAt(0).toUpperCase();
+            
+            const syncText = document.getElementById('syncText');
+            const statusIndicator = document.getElementById('statusIndicator');
+            
+            if (state.isOnline) {
+                statusIndicator.className = 'status-indicator status-online';
+                if (state.localData.pendingSync.length > 0) {
+                    syncText.innerHTML = `Online <span class="badge-sync">${state.localData.pendingSync.length} pendente(s)</span>`;
+                } else {
+                    syncText.textContent = 'Online';
+                }
+            } else {
+                statusIndicator.className = 'status-indicator status-offline';
+                syncText.textContent = 'Offline';
             }
+            
+            const adminElements = document.querySelectorAll('.admin-only');
+            if (user.level === 'admin') {
+                adminElements.forEach(el => el.classList.remove('hidden'));
+            } else {
+                adminElements.forEach(el => el.classList.add('hidden'));
+            }
+            
+            updateCurrentOrderUser();
         }
         
-        // Atualizar nome do usuário no pedido atual
         function updateCurrentOrderUser() {
             const currentOrderUser = document.getElementById('currentOrderUser');
             if (state.currentUser) {
@@ -1836,9 +2807,9 @@
             }
         }
         
-        // Carregar filtros de restaurantes
         function loadRestaurantFilters() {
             const container = document.getElementById('restaurantFilters');
+            if (!container) return;
             
             if (state.restaurants.length === 0) {
                 container.innerHTML = '<p style="color: #aaa;">Nenhum restaurante cadastrado</p>';
@@ -1853,7 +2824,6 @@
             `;
             
             state.restaurants.forEach(restaurant => {
-                // Verificar se o restaurante tem itens do tipo atual
                 const hasItems = state.items.some(item => 
                     item.restaurantId === restaurant.id && 
                     item.type === state.currentFilters.type
@@ -1872,12 +2842,10 @@
             container.innerHTML = filtersHTML;
         }
         
-        // Filtrar por restaurante
         window.filterByRestaurant = function(restaurantId) {
             state.currentFilters.restaurant = restaurantId;
             loadItemsByFilters();
             
-            // Atualizar botões ativos
             document.querySelectorAll('.btn-filter').forEach(btn => {
                 const btnRestaurantId = btn.getAttribute('data-restaurant');
                 if (btnRestaurantId == restaurantId) {
@@ -1888,18 +2856,15 @@
             });
         }
         
-        // Carregar itens com filtros aplicados
         function loadItemsByFilters() {
             const container = document.getElementById('itemsContainer');
+            if (!container) return;
             
-            // Aplicar filtros
             let filteredItems = state.items.filter(item => {
-                // Filtro por tipo
                 if (state.currentFilters.type !== 'all' && item.type !== state.currentFilters.type) {
                     return false;
                 }
                 
-                // Filtro por restaurante
                 if (state.currentFilters.restaurant !== 'all' && item.restaurantId != state.currentFilters.restaurant) {
                     return false;
                 }
@@ -1907,7 +2872,6 @@
                 return true;
             });
             
-            // Atualizar filtros de restaurante
             loadRestaurantFilters();
             
             if (filteredItems.length === 0) {
@@ -1949,7 +2913,6 @@
             `}).join('');
         }
         
-        // Resetar filtros
         window.resetFilters = function() {
             state.currentFilters = {
                 type: 'almoco',
@@ -1968,63 +2931,54 @@
             loadItemsByFilters();
         }
         
-        // Atualizar select de restaurantes
+        // CORREÇÃO PRINCIPAL: Função atualizada para popular o select de restaurantes
         function updateRestaurantSelect() {
             const select = document.getElementById('itemRestaurant');
+            if (!select) {
+                console.log('Elemento itemRestaurant não encontrado');
+                return;
+            }
+            
+            console.log('Atualizando select de restaurantes. Total de restaurantes:', state.restaurants.length);
+            
+            // Salvar valor selecionado atual
+            const currentValue = select.value;
+            
+            // Limpar opções existentes
             select.innerHTML = '<option value="">Selecione um restaurante</option>';
             
+            // Adicionar restaurantes
             state.restaurants.forEach(restaurant => {
                 const option = document.createElement('option');
                 option.value = restaurant.id;
                 option.textContent = restaurant.name;
                 select.appendChild(option);
             });
-        }
-        
-        // Atualizar UI conforme o usuário logado
-        function updateUIForUser() {
-            const user = state.currentUser;
             
-            document.getElementById('userName').textContent = user.name;
-            document.getElementById('userLevel').textContent = user.level === 'admin' ? 'Administrador' : 'Operador';
-            document.getElementById('userAvatar').textContent = user.name.charAt(0).toUpperCase();
-            
-            // Mostrar status de conexão
-            const connectionStatus = state.isOnline ? 'Online' : 'Offline';
-            const connectionColor = state.isOnline ? 'var(--success)' : 'var(--warning)';
-            document.getElementById('userLevel').innerHTML += `<br><small style="color: ${connectionColor}">(${connectionStatus})</small>`;
-            
-            // Mostrar/ocultar funcionalidades baseado no nível
-            const adminElements = document.querySelectorAll('.admin-only');
-            
-            if (user.level === 'admin') {
-                adminElements.forEach(el => el.classList.remove('hidden'));
-                updateCurrentOrderUser();
-            } else {
-                adminElements.forEach(el => el.classList.add('hidden'));
-                updateCurrentOrderUser();
+            // Restaurar valor selecionado se ainda existir
+            if (currentValue && state.restaurants.some(r => r.id == currentValue)) {
+                select.value = currentValue;
             }
+            
+            console.log('Select de restaurantes atualizado com', state.restaurants.length, 'opções');
         }
         
-        // Alternar seleção de item
         window.toggleItemSelection = function(itemId) {
             const item = state.items.find(i => i.id === itemId);
+            if (!item) return;
             
             const existingIndex = state.currentOrder.items.findIndex(i => i.id === itemId);
             
             if (existingIndex >= 0) {
-                // Remover item
                 state.currentOrder.items.splice(existingIndex, 1);
                 state.currentOrder.total -= item.price;
             } else {
-                // Adicionar item
                 state.currentOrder.items.push(item);
                 state.currentOrder.total += item.price;
             }
             
             updateOrderSummary();
             
-            // Atualizar botão
             const button = document.querySelector(`.item-select-btn[data-id="${itemId}"]`);
             if (button) {
                 if (existingIndex >= 0) {
@@ -2037,10 +2991,11 @@
             }
         }
         
-        // Atualizar resumo do pedido
         function updateOrderSummary() {
             const list = document.getElementById('selectedItemsList');
             const total = document.getElementById('orderTotal');
+            
+            if (!list || !total) return;
             
             if (state.currentOrder.items.length === 0) {
                 list.innerHTML = `<li class="selected-item"><span>Nenhum item selecionado</span></li>`;
@@ -2066,7 +3021,6 @@
             total.textContent = `R$ ${state.currentOrder.total.toFixed(2)}`;
         }
         
-        // Remover item do pedido
         window.removeItemFromOrder = function(itemId) {
             const itemIndex = state.currentOrder.items.findIndex(i => i.id === itemId);
             
@@ -2077,7 +3031,6 @@
                 
                 updateOrderSummary();
                 
-                // Atualizar botão na lista de itens
                 const button = document.querySelector(`.item-select-btn[data-id="${itemId}"]`);
                 if (button) {
                     button.classList.remove('item-selected');
@@ -2086,12 +3039,12 @@
             }
         }
         
-        // Carregar pedidos do usuário
         function loadMyOrders() {
             const container = document.getElementById('myOrdersContainer');
+            if (!container) return;
+            
             let userOrders = state.orders.filter(order => order.userId === state.currentUser.id);
             
-            // Aplicar filtro de status
             if (state.orderStatusFilter !== 'all') {
                 userOrders = userOrders.filter(order => order.status === state.orderStatusFilter);
             }
@@ -2105,10 +3058,16 @@
                 const statusText = order.status === 'pending' ? 'Pendente' : order.status === 'ready' ? 'Pronto' : 'Cancelado';
                 const statusClass = order.status === 'pending' ? 'badge-pending' : order.status === 'ready' ? 'badge-ready' : 'badge-cancelled';
                 
+                const orderItems = state.orderItems.filter(oi => oi.pedido_id === order.id);
+                const itemsWithDetails = orderItems.map(oi => {
+                    const item = state.items.find(i => i.id === oi.item_id);
+                    return item ? { ...item, quantidade: oi.quantidade } : null;
+                }).filter(Boolean);
+                
                 return `
                 <div class="card" style="margin-bottom: 20px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                        <h3 class="card-title">Pedido #${order.id}</h3>
+                        <h3 class="card-title">Pedido ${order.numero_pedido || '#' + order.id}</h3>
                         <div>
                             <span class="badge-status ${statusClass}">${statusText}</span>
                             <div style="color: var(--primary); font-weight: bold; margin-top: 5px;">R$ ${order.total.toFixed(2)}</div>
@@ -2118,10 +3077,9 @@
                         <div class="order-date">Realizado em: ${order.date}</div>
                     </div>
                     <ul style="margin-top: 15px; padding-left: 20px;">
-                        ${order.items.map(item => {
-                            const restaurant = state.restaurants.find(r => r.id === item.restaurantId);
-                            return `<li>${item.name} - ${restaurant ? restaurant.name : ''} - R$ ${item.price.toFixed(2)}</li>`;
-                        }).join('')}
+                        ${itemsWithDetails.map(item => 
+                            `<li>${item.name} (${item.quantidade}x) - R$ ${(item.price * item.quantidade).toFixed(2)}</li>`
+                        ).join('')}
                     </ul>
                     ${order.status === 'pending' ? `
                         <div class="order-actions">
@@ -2134,17 +3092,16 @@
             `}).join('');
         }
         
-        // Carregar todos os pedidos (admin)
         function loadAllOrders() {
             const container = document.getElementById('allOrdersContainer');
+            if (!container) return;
+            
             let allOrders = [...state.orders];
             
-            // Aplicar filtro de status
             if (state.orderStatusFilter !== 'all') {
                 allOrders = allOrders.filter(order => order.status === state.orderStatusFilter);
             }
             
-            // Ordenar por data
             allOrders.sort((a, b) => b.id - a.id);
             
             if (allOrders.length === 0) {
@@ -2156,12 +3113,19 @@
                 const statusText = order.status === 'pending' ? 'Pendente' : order.status === 'ready' ? 'Pronto' : 'Cancelado';
                 const statusClass = order.status === 'pending' ? 'badge-pending' : order.status === 'ready' ? 'badge-ready' : 'badge-cancelled';
                 
+                const user = state.users.find(u => u.id === order.userId);
+                const orderItems = state.orderItems.filter(oi => oi.pedido_id === order.id);
+                const itemsWithDetails = orderItems.map(oi => {
+                    const item = state.items.find(i => i.id === oi.item_id);
+                    return item ? { ...item, quantidade: oi.quantidade } : null;
+                }).filter(Boolean);
+                
                 return `
                 <div class="card" style="margin-bottom: 20px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                         <div>
-                            <h3 class="card-title">Pedido #${order.id}</h3>
-                            <div class="order-user">Cliente: ${order.userName}</div>
+                            <h3 class="card-title">Pedido ${order.numero_pedido || '#' + order.id}</h3>
+                            <div class="order-user">Cliente: ${user ? user.name : order.userName || 'Desconhecido'}</div>
                         </div>
                         <div>
                             <span class="badge-status ${statusClass}">${statusText}</span>
@@ -2172,10 +3136,9 @@
                         <div class="order-date">Realizado em: ${order.date}</div>
                     </div>
                     <ul style="margin-top: 15px; padding-left: 20px;">
-                        ${order.items.map(item => {
-                            const restaurant = state.restaurants.find(r => r.id === item.restaurantId);
-                            return `<li>${item.name} - ${restaurant ? restaurant.name : ''} - R$ ${item.price.toFixed(2)}</li>`;
-                        }).join('')}
+                        ${itemsWithDetails.map(item => 
+                            `<li>${item.name} (${item.quantidade}x) - R$ ${(item.price * item.quantidade).toFixed(2)}</li>`
+                        ).join('')}
                     </ul>
                     <div class="order-actions">
                         ${order.status === 'pending' ? `
@@ -2188,22 +3151,27 @@
                                 <i class="fas fa-times"></i> Cancelar Pedido
                             </button>
                         ` : ''}
-                        <button class="btn btn-sm" style="background-color: transparent; border: 1px solid var(--primary); color: var(--primary);" onclick="editOrder(${order.id})">
-                            <i class="fas fa-edit"></i> Editar Pedido
-                        </button>
                     </div>
                 </div>
             `}).join('');
         }
         
-        // Marcar pedido como pronto
         window.markOrderAsReady = function(orderId) {
             const orderIndex = state.orders.findIndex(o => o.id === orderId);
             
             if (orderIndex >= 0) {
                 state.orders[orderIndex].status = 'ready';
                 
-                // Atualizar a visualização
+                if (state.isOnline && state.currentUser && state.currentUser.level === 'admin') {
+                    try {
+                        updateInBaserow(BASEROW_CONFIG.TABLES.ORDERS.id, orderId, {
+                            [BASEROW_CONFIG.TABLES.ORDERS.fields.status]: 'ready'
+                        });
+                    } catch (error) {
+                        console.error('Erro ao atualizar status:', error);
+                    }
+                }
+                
                 const currentSection = document.querySelector('.section:not(.hidden)').id;
                 if (currentSection === 'my-orders-section') {
                     loadMyOrders();
@@ -2215,7 +3183,6 @@
             }
         }
         
-        // Cancelar pedido
         window.cancelOrder = function(orderId) {
             if (!confirm('Tem certeza que deseja cancelar este pedido?')) {
                 return;
@@ -2226,7 +3193,16 @@
             if (orderIndex >= 0) {
                 state.orders[orderIndex].status = 'cancelled';
                 
-                // Atualizar a visualização
+                if (state.isOnline && state.currentUser && state.currentUser.level === 'admin') {
+                    try {
+                        updateInBaserow(BASEROW_CONFIG.TABLES.ORDERS.id, orderId, {
+                            [BASEROW_CONFIG.TABLES.ORDERS.fields.status]: 'cancelled'
+                        });
+                    } catch (error) {
+                        console.error('Erro ao cancelar pedido:', error);
+                    }
+                }
+                
                 const currentSection = document.querySelector('.section:not(.hidden)').id;
                 if (currentSection === 'my-orders-section') {
                     loadMyOrders();
@@ -2238,144 +3214,9 @@
             }
         }
         
-        // Editar pedido
-        window.editOrder = function(orderId) {
-            const order = state.orders.find(o => o.id === orderId);
-            if (!order) return;
-            
-            const modalContent = document.getElementById('editOrderContent');
-            
-            let itemsHTML = '';
-            state.items.forEach(item => {
-                const isSelected = order.items.some(oi => oi.id === item.id);
-                const restaurant = state.restaurants.find(r => r.id === item.restaurantId);
-                
-                itemsHTML += `
-                    <div style="margin-bottom: 10px; padding: 10px; background-color: rgba(0,0,0,0.2); border-radius: 5px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <div style="font-weight: 600;">${item.name}</div>
-                                <div style="font-size: 0.9rem; color: #aaa;">${restaurant ? restaurant.name : ''} - R$ ${item.price.toFixed(2)}</div>
-                            </div>
-                            <button type="button" class="item-select-btn ${isSelected ? 'item-selected' : ''}" 
-                                    onclick="toggleOrderItem(${orderId}, ${item.id})">
-                                ${isSelected ? '<i class="fas fa-check"></i> Selecionado' : '<i class="fas fa-plus"></i> Adicionar'}
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            modalContent.innerHTML = `
-                <div class="order-details">
-                    <div class="order-user">Cliente: ${order.userName}</div>
-                    <div class="order-date">Pedido realizado em: ${order.date}</div>
-                    <div style="margin-top: 10px;">
-                        <span class="badge-status ${order.status === 'pending' ? 'badge-pending' : order.status === 'ready' ? 'badge-ready' : 'badge-cancelled'}">
-                            ${order.status === 'pending' ? 'Pendente' : order.status === 'ready' ? 'Pronto' : 'Cancelado'}
-                        </span>
-                    </div>
-                </div>
-                
-                <div style="margin-top: 20px;">
-                    <h4 style="color: var(--primary); margin-bottom: 15px;">Itens do Pedido</h4>
-                    <div style="max-height: 300px; overflow-y: auto; margin-bottom: 20px;">
-                        ${itemsHTML}
-                    </div>
-                    
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
-                        <div style="font-weight: bold; color: var(--primary);">Total: R$ ${order.total.toFixed(2)}</div>
-                        <div>
-                            <button class="btn btn-primary" onclick="saveOrderChanges(${orderId})">
-                                <i class="fas fa-save"></i> Salvar Alterações
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('editOrderModal').classList.remove('hidden');
-        }
-        
-        // Alternar item no pedido (edição)
-        window.toggleOrderItem = function(orderId, itemId) {
-            const order = state.orders.find(o => o.id === orderId);
-            if (!order) return;
-            
-            const item = state.items.find(i => i.id === itemId);
-            if (!item) return;
-            
-            const existingIndex = order.items.findIndex(i => i.id === itemId);
-            
-            if (existingIndex >= 0) {
-                // Remover item
-                order.items.splice(existingIndex, 1);
-                order.total -= item.price;
-            } else {
-                // Adicionar item
-                order.items.push({
-                    id: item.id,
-                    restaurantId: item.restaurantId,
-                    name: item.name,
-                    price: item.price
-                });
-                order.total += item.price;
-            }
-            
-            // Atualizar botão
-            const button = document.querySelector(`.item-select-btn[onclick="toggleOrderItem(${orderId}, ${itemId})"]`);
-            if (button) {
-                if (existingIndex >= 0) {
-                    button.classList.remove('item-selected');
-                    button.innerHTML = '<i class="fas fa-plus"></i> Adicionar';
-                } else {
-                    button.classList.add('item-selected');
-                    button.innerHTML = '<i class="fas fa-check"></i> Selecionado';
-                }
-            }
-            
-            // Atualizar total
-            const totalElement = document.querySelector('#editOrderContent div[style*="font-weight: bold; color: var(--primary);"]');
-            if (totalElement) {
-                totalElement.textContent = `Total: R$ ${order.total.toFixed(2)}`;
-            }
-        }
-        
-        // Salvar alterações do pedido
-        window.saveOrderChanges = function(orderId) {
-            closeEditOrderModal();
-            loadAllOrders();
-            showAlert('Pedido atualizado com sucesso!', 'success');
-        }
-        
-        // Fechar modal de edição de pedido
-        window.closeEditOrderModal = function() {
-            document.getElementById('editOrderModal').classList.add('hidden');
-        }
-        
-        // Abrir modal de edição de usuário
-        window.openEditUserModal = function(userId) {
-            const user = state.users.find(u => u.id === userId);
-            if (!user) return;
-            
-            document.getElementById('editUserId').value = user.id;
-            document.getElementById('editUserName').value = user.name;
-            document.getElementById('editUserLogin').value = user.login;
-            document.getElementById('editUserPassword').value = '';
-            document.getElementById('editUserLevel').value = user.level;
-            
-            document.getElementById('editUserModal').classList.remove('hidden');
-        }
-        
-        // Fechar modal de edição de usuário
-        window.closeEditUserModal = function() {
-            document.getElementById('editUserModal').classList.add('hidden');
-            document.getElementById('editUserForm').reset();
-        }
-        
-        // Carregar itens para administração
         function loadAdminItems() {
             const container = document.getElementById('adminItemsContainer');
+            if (!container) return;
             
             if (state.items.length === 0) {
                 container.innerHTML = `<div class="card"><p>Nenhum item cadastrado.</p></div>`;
@@ -2400,7 +3241,6 @@
             `}).join('');
         }
         
-        // Excluir item
         window.deleteItem = function(itemId) {
             if (confirm('Tem certeza que deseja excluir este item?')) {
                 const itemIndex = state.items.findIndex(i => i.id === itemId);
@@ -2408,7 +3248,6 @@
                 if (itemIndex >= 0) {
                     state.items.splice(itemIndex, 1);
                     
-                    // Remover também dos dados locais
                     const localIndex = state.localData.items.findIndex(i => i.id === itemId);
                     if (localIndex >= 0) {
                         state.localData.items.splice(localIndex, 1);
@@ -2423,9 +3262,9 @@
             }
         }
         
-        // Carregar tabela de restaurantes
         function loadRestaurantsTable() {
             const tbody = document.getElementById('restaurantsTableBody');
+            if (!tbody) return;
             
             tbody.innerHTML = state.restaurants.map(restaurant => {
                 const itemCount = state.items.filter(item => item.restaurantId === restaurant.id).length;
@@ -2443,9 +3282,7 @@
             `}).join('');
         }
         
-        // Excluir restaurante
         window.deleteRestaurant = async function(restaurantId) {
-            // Verificar se existem itens associados ao restaurante
             const itemCount = state.items.filter(item => item.restaurantId === restaurantId).length;
             
             if (itemCount > 0) {
@@ -2457,8 +3294,7 @@
                 const restaurantIndex = state.restaurants.findIndex(r => r.id === restaurantId);
                 
                 if (restaurantIndex >= 0) {
-                    // Tentar excluir do Baserow se online
-                    if (state.isOnline && state.currentUser.level === 'admin') {
+                    if (state.isOnline && state.currentUser && state.currentUser.level === 'admin') {
                         try {
                             await deleteFromBaserow(BASEROW_CONFIG.TABLES.RESTAURANTS.id, restaurantId);
                             showAlert('Restaurante excluído do servidor!', 'success');
@@ -2477,33 +3313,9 @@
             }
         }
         
-        // Função para excluir do Baserow
-        async function deleteFromBaserow(tableId, rowId) {
-            try {
-                const response = await fetch(
-                    `${BASEROW_CONFIG.BASE_URL}${tableId}/${rowId}/`,
-                    {
-                        method: 'DELETE',
-                        headers: {
-                            'Authorization': `Token ${BASEROW_CONFIG.TOKEN}`
-                        }
-                    }
-                );
-                
-                if (!response.ok) {
-                    throw new Error(`Erro HTTP: ${response.status}`);
-                }
-                
-                return true;
-            } catch (error) {
-                console.error('Erro ao excluir do Baserow:', error);
-                throw error;
-            }
-        }
-        
-        // Carregar tabela de usuários
         function loadUsersTable() {
             const tbody = document.getElementById('usersTableBody');
+            if (!tbody) return;
             
             tbody.innerHTML = state.users.map(user => `
                 <tr>
@@ -2528,7 +3340,24 @@
             `).join('');
         }
         
-        // Excluir usuário
+        window.openEditUserModal = function(userId) {
+            const user = state.users.find(u => u.id === userId);
+            if (!user) return;
+            
+            document.getElementById('editUserId').value = user.id;
+            document.getElementById('editUserName').value = user.name;
+            document.getElementById('editUserLogin').value = user.login;
+            document.getElementById('editUserPassword').value = '';
+            document.getElementById('editUserLevel').value = user.level;
+            
+            document.getElementById('editUserModal').classList.remove('hidden');
+        }
+        
+        window.closeEditUserModal = function() {
+            document.getElementById('editUserModal').classList.add('hidden');
+            document.getElementById('editUserForm').reset();
+        }
+        
         window.deleteUser = async function(userId) {
             if (userId <= 2) {
                 showAlert('Usuários padrão não podem ser excluídos!', 'error');
@@ -2539,8 +3368,7 @@
                 const userIndex = state.users.findIndex(u => u.id === userId);
                 
                 if (userIndex >= 0) {
-                    // Tentar excluir do Baserow se online
-                    if (state.isOnline && state.currentUser.level === 'admin') {
+                    if (state.isOnline && state.currentUser && state.currentUser.level === 'admin') {
                         try {
                             await deleteFromBaserow(BASEROW_CONFIG.TABLES.USERS.id, userId);
                             showAlert('Usuário excluído do servidor!', 'success');
@@ -2557,9 +3385,7 @@
             }
         }
         
-        // Mostrar alerta
         function showAlert(message, type) {
-            // Remover alertas anteriores
             const existingAlert = document.querySelector('.alert');
             if (existingAlert) {
                 existingAlert.remove();
@@ -2572,18 +3398,22 @@
                 <span>${message}</span>
             `;
             
-            // Adicionar ao conteúdo principal
             const contentArea = document.querySelector('.content-area');
-            contentArea.insertBefore(alert, contentArea.firstChild);
-            
-            // Remover após 5 segundos
-            setTimeout(() => {
-                if (alert.parentNode) {
-                    alert.remove();
-                }
-            }, 5000);
+            if (contentArea) {
+                contentArea.insertBefore(alert, contentArea.firstChild);
+                
+                setTimeout(() => {
+                    if (alert.parentNode) {
+                        alert.remove();
+                    }
+                }, 5000);
+            }
         }
+        
+        // Inicializar status
+        updateConnectionStatus();
     </script>
 </body>
 </html>
+
 
