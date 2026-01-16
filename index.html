@@ -1,0 +1,2304 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2M Motos Gastronomia | Sistema de Pedidos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00f3ff;
+            --primary-dark: #0099cc;
+            --secondary: #ff2a6d;
+            --dark: #0c0f1d;
+            --dark-light: #1a1f3a;
+            --light: #f5f7ff;
+            --success: #2dff9d;
+            --warning: #ffb52d;
+            --danger: #ff2d6d;
+            --radius: 10px;
+            --transition: all 0.3s ease;
+            --shadow: 0 5px 15px rgba(0, 243, 255, 0.1);
+            --shadow-hover: 0 10px 25px rgba(0, 243, 255, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Exo 2', sans-serif;
+            background-color: var(--dark);
+            color: var(--light);
+            line-height: 1.6;
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 243, 255, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(255, 42, 109, 0.05) 0%, transparent 20%);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-img {
+            height: 60px;
+            width: auto;
+        }
+
+        .logo-text {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 2rem;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            font-weight: bold;
+            border: 2px solid var(--primary);
+            box-shadow: var(--shadow);
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 600;
+        }
+
+        .user-level {
+            font-size: 0.8rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid var(--secondary);
+            color: var(--light);
+            padding: 8px 15px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Exo 2', sans-serif;
+        }
+
+        .logout-btn:hover {
+            background: var(--secondary);
+            box-shadow: 0 0 15px rgba(255, 42, 109, 0.5);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 30px;
+        }
+
+        .sidebar {
+            background-color: var(--dark-light);
+            border-radius: var(--radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(0, 243, 255, 0.1);
+        }
+
+        .nav-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+        }
+
+        .nav-list {
+            list-style: none;
+            margin-bottom: 30px;
+        }
+
+        .nav-item {
+            margin-bottom: 10px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 15px;
+            border-radius: var(--radius);
+            color: var(--light);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background-color: rgba(0, 243, 255, 0.1);
+            color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
+        }
+
+        .content-area {
+            background-color: var(--dark-light);
+            border-radius: var(--radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(0, 243, 255, 0.1);
+            min-height: 600px;
+        }
+
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            color: var(--primary);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section-title::after {
+            content: '';
+            flex-grow: 1;
+            height: 2px;
+            background: linear-gradient(to right, var(--primary), transparent);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: var(--radius);
+            color: var(--light);
+            font-family: 'Exo 2', sans-serif;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+        }
+
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2300f3ff' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 16px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: var(--radius);
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary), var(--primary-dark));
+            color: var(--dark);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, var(--secondary), #d4004e);
+            color: var(--light);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 0 20px rgba(255, 42, 109, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.9rem;
+        }
+
+        .btn-filter {
+            padding: 8px 15px;
+            background-color: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Exo 2', sans-serif;
+        }
+
+        .btn-filter:hover {
+            background-color: rgba(0, 243, 255, 0.1);
+        }
+
+        .btn-filter.active {
+            background-color: var(--primary);
+            color: var(--dark);
+        }
+
+        /* Cards */
+        .card {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: var(--radius);
+            padding: 20px;
+            border: 1px solid rgba(0, 243, 255, 0.1);
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .card-subtitle {
+            color: var(--secondary);
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .card-text {
+            color: #aaa;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+        }
+
+        /* Items Grid */
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .item-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .item-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+
+        .item-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+
+        .item-select-btn {
+            background-color: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 15px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Exo 2', sans-serif;
+        }
+
+        .item-select-btn:hover {
+            background-color: var(--primary);
+            color: var(--dark);
+        }
+
+        .item-selected {
+            background-color: var(--primary);
+            color: var(--dark);
+        }
+
+        /* Order Summary */
+        .order-summary {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: var(--radius);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+        }
+
+        .summary-title {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .selected-items-list {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+
+        .selected-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .remove-item {
+            color: var(--danger);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .order-total {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary);
+            padding-top: 15px;
+            border-top: 1px solid rgba(0, 243, 255, 0.3);
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background-color: rgba(0, 243, 255, 0.1);
+            color: var(--primary);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .data-table td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .data-table tr:hover {
+            background-color: rgba(0, 243, 255, 0.05);
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-admin {
+            background-color: rgba(255, 42, 109, 0.2);
+            color: var(--secondary);
+        }
+
+        .badge-operator {
+            background-color: rgba(0, 243, 255, 0.2);
+            color: var(--primary);
+        }
+
+        .badge-status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-pending {
+            background-color: rgba(255, 181, 45, 0.2);
+            color: var(--warning);
+        }
+
+        .badge-ready {
+            background-color: rgba(45, 255, 157, 0.2);
+            color: var(--success);
+        }
+
+        .badge-cancelled {
+            background-color: rgba(255, 45, 109, 0.2);
+            color: var(--danger);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            margin-bottom: 25px;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+        }
+
+        .tab {
+            padding: 12px 25px;
+            background: none;
+            border: none;
+            color: var(--light);
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 600;
+        }
+
+        .tab:hover {
+            color: var(--primary);
+        }
+
+        .tab.active {
+            color: var(--primary);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+
+        /* Filters */
+        .filters-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 25px;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: var(--radius);
+            border: 1px solid rgba(0, 243, 255, 0.1);
+        }
+
+        .filter-title {
+            font-weight: 600;
+            color: var(--primary);
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        /* Alert */
+        .alert {
+            padding: 15px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .alert-success {
+            background-color: rgba(45, 255, 157, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        .alert-error {
+            background-color: rgba(255, 45, 109, 0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+        }
+
+        /* Login Screen */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 450px;
+            background-color: var(--dark-light);
+            border-radius: var(--radius);
+            padding: 40px;
+            box-shadow: var(--shadow-hover);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            text-align: center;
+        }
+
+        .login-logo {
+            font-size: 3.5rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px var(--primary);
+        }
+
+        .login-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            margin-bottom: 30px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0, 243, 255, 0.2);
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background-color: var(--dark-light);
+            border-radius: var(--radius);
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            color: var(--secondary);
+        }
+
+        /* Order Actions */
+        .order-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .order-status-filter {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .status-filter-btn {
+            padding: 8px 15px;
+            background-color: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .status-filter-btn:hover {
+            background-color: rgba(0, 243, 255, 0.1);
+        }
+
+        .status-filter-btn.active {
+            background-color: var(--primary);
+            color: var(--dark);
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                margin-bottom: 20px;
+            }
+            
+            .items-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .items-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                text-align: left;
+            }
+            
+            .logo-text {
+                font-size: 1.5rem;
+            }
+            
+            .logo-img {
+                height: 50px;
+            }
+            
+            .filters-container {
+                flex-direction: column;
+            }
+            
+            .order-actions {
+                flex-direction: column;
+            }
+        }
+        
+        /* Restaurant specific */
+        .restaurant-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            background-color: rgba(0, 243, 255, 0.1);
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .restaurant-address {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 3px;
+        }
+        
+        .no-items {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px;
+            color: #aaa;
+        }
+        
+        /* Order Details */
+        .order-details {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .order-user {
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .order-date {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-card">
+            <img src="https://i.ibb.co/DD98rjsH/logo1.png" alt="2M Motos Logo" class="logo-img" style="height: 80px; margin: 0 auto 20px; display: block;">
+            <h1 class="login-title">2M MOTOS GASTRONOMIA</h1>
+            <p style="margin-bottom: 30px; color: #aaa;">Sistema de pedidos culinários</p>
+            
+            <div class="form-group">
+                <label for="loginUsername" class="form-label">Usuário</label>
+                <input type="text" id="loginUsername" class="form-control" placeholder="Digite seu login">
+            </div>
+            
+            <div class="form-group">
+                <label for="loginPassword" class="form-label">Senha</label>
+                <input type="password" id="loginPassword" class="form-control" placeholder="Digite sua senha">
+            </div>
+            
+            <div class="form-group">
+                <button id="loginButton" class="btn btn-primary" style="width: 100%; margin-top: 20px;">
+                    <i class="fas fa-sign-in-alt"></i> Entrar no Sistema
+                </button>
+            </div>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <p style="color: #aaa; font-size: 0.9rem;">
+                    <strong>Sistema Digital Inteligente de Pedidos 2m motos</strong>
+                    <strong>Copyright 2026 - Todos os direitos reservados</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="app" class="hidden">
+        <div class="container">
+            <header>
+                <div class="logo">
+                    <img src="https://i.ibb.co/DD98rjsH/logo1.png" alt="2M Motos Logo" class="logo-img">
+                    <div class="logo-text">2M MOTOS GASTRONOMIA</div>
+                </div>
+                
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Administrador</div>
+                        <div class="user-level" id="userLevel">Administrador</div>
+                    </div>
+                    <button id="logoutButton" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Sair
+                    </button>
+                </div>
+            </header>
+            
+            <div class="main-content">
+                <nav class="sidebar">
+                    <h3 class="nav-title">NAVEGAÇÃO</h3>
+                    <ul class="nav-list">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link active" data-section="order">
+                                <i class="fas fa-utensils nav-icon"></i> Montar Pedido
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-section="my-orders">
+                                <i class="fas fa-clipboard-list nav-icon"></i> Meus Pedidos
+                            </a>
+                        </li>
+                        <li class="nav-item admin-only">
+                            <a href="#" class="nav-link" data-section="all-orders">
+                                <i class="fas fa-list-alt nav-icon"></i> Todos os Pedidos
+                            </a>
+                        </li>
+                        <li class="nav-item admin-only">
+                            <a href="#" class="nav-link" data-section="items">
+                                <i class="fas fa-hamburger nav-icon"></i> Cadastrar Itens
+                            </a>
+                        </li>
+                        <li class="nav-item admin-only">
+                            <a href="#" class="nav-link" data-section="restaurants">
+                                <i class="fas fa-store nav-icon"></i> Restaurantes
+                            </a>
+                        </li>
+                        <li class="nav-item admin-only">
+                            <a href="#" class="nav-link" data-section="users">
+                                <i class="fas fa-users nav-icon"></i> Usuários
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <h3 class="nav-title">PEDIDO ATUAL</h3>
+                    <div class="order-summary">
+                        <div class="summary-title">Resumo do Pedido</div>
+                        <div class="order-user" id="currentOrderUser"></div>
+                        <ul class="selected-items-list" id="selectedItemsList">
+                            <li class="selected-item">
+                                <span>Nenhum item selecionado</span>
+                            </li>
+                        </ul>
+                        <div class="order-total">
+                            <span>Total:</span>
+                            <span id="orderTotal">R$ 0,00</span>
+                        </div>
+                        <button id="placeOrderButton" class="btn btn-secondary" style="width: 100%; margin-top: 15px;">
+                            <i class="fas fa-paper-plane"></i> Finalizar Pedido
+                        </button>
+                    </div>
+                </nav>
+                
+                <main class="content-area">
+                    <!-- Montar Pedido -->
+                    <div id="order-section" class="section">
+                        <h2 class="section-title">
+                            <i class="fas fa-utensils"></i> Montar seu Pedido
+                        </h2>
+                        
+                        <!-- Filtros -->
+                        <div class="filters-container">
+                            <div style="display: flex; align-items: center; width: 100%; margin-bottom: 15px;">
+                                <div class="filter-title">
+                                    <i class="fas fa-filter"></i> Filtrar por:
+                                </div>
+                            </div>
+                            
+                            <div style="width: 100%; margin-bottom: 15px;">
+                                <div class="filter-title">
+                                    <i class="fas fa-utensils"></i> Tipo de Pedido
+                                </div>
+                                <div class="filter-options">
+                                    <button class="tab active" data-type="almoco">Almoço</button>
+                                    <button class="tab" data-type="lanche">Lanche</button>
+                                    <button class="tab" data-type="outros">Outros</button>
+                                </div>
+                            </div>
+                            
+                            <div style="width: 100%;">
+                                <div class="filter-title">
+                                    <i class="fas fa-store"></i> Restaurante
+                                </div>
+                                <div class="filter-options" id="restaurantFilters">
+                                    <!-- Filtros de restaurantes serão carregados aqui -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="itemsContainer" class="items-grid">
+                            <!-- Itens serão carregados aqui -->
+                        </div>
+                    </div>
+                    
+                    <!-- Meus Pedidos -->
+                    <div id="my-orders-section" class="section hidden">
+                        <h2 class="section-title">
+                            <i class="fas fa-clipboard-list"></i> Meus Pedidos
+                        </h2>
+                        
+                        <div class="order-status-filter">
+                            <button class="status-filter-btn active" data-status="all">Todos</button>
+                            <button class="status-filter-btn" data-status="pending">Pendentes</button>
+                            <button class="status-filter-btn" data-status="ready">Prontos</button>
+                            <button class="status-filter-btn" data-status="cancelled">Cancelados</button>
+                        </div>
+                        
+                        <div id="myOrdersContainer">
+                            <p>Você ainda não fez nenhum pedido.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Todos os Pedidos (Admin) -->
+                    <div id="all-orders-section" class="section hidden">
+                        <h2 class="section-title">
+                            <i class="fas fa-list-alt"></i> Todos os Pedidos
+                        </h2>
+                        
+                        <div class="order-status-filter">
+                            <button class="status-filter-btn active" data-status="all">Todos</button>
+                            <button class="status-filter-btn" data-status="pending">Pendentes</button>
+                            <button class="status-filter-btn" data-status="ready">Prontos</button>
+                            <button class="status-filter-btn" data-status="cancelled">Cancelados</button>
+                        </div>
+                        
+                        <div id="allOrdersContainer">
+                            <p>Nenhum pedido realizado no sistema.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Cadastrar Itens (Admin) -->
+                    <div id="items-section" class="section hidden">
+                        <h2 class="section-title">
+                            <i class="fas fa-hamburger"></i> Cadastrar Itens
+                        </h2>
+                        
+                        <div class="card" style="margin-bottom: 30px;">
+                            <h3 class="card-title">Adicionar Novo Item</h3>
+                            <form id="itemForm">
+                                <div class="form-group">
+                                    <label for="itemRestaurant" class="form-label">Restaurante</label>
+                                    <select id="itemRestaurant" class="form-control form-select" required>
+                                        <option value="">Selecione um restaurante</option>
+                                        <!-- Restaurantes serão carregados dinamicamente -->
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="itemType" class="form-label">Tipo</label>
+                                    <select id="itemType" class="form-control form-select" required>
+                                        <option value="">Selecione um tipo</option>
+                                        <option value="almoco">Almoço</option>
+                                        <option value="lanche">Lanche</option>
+                                        <option value="outros">Outros</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="itemName" class="form-label">Nome do Item</label>
+                                    <input type="text" id="itemName" class="form-control" placeholder="Ex: Quantum Burger" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="itemDescription" class="form-label">Descrição</label>
+                                    <textarea id="itemDescription" class="form-control" rows="3" placeholder="Descreva o item..." required></textarea>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="itemPrice" class="form-label">Preço (R$)</label>
+                                    <input type="number" id="itemPrice" class="form-control" min="0" step="0.01" placeholder="0.00" required>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-plus-circle"></i> Adicionar Item
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <h3 class="section-title" style="font-size: 1.5rem;">Itens Cadastrados</h3>
+                        <div class="items-grid" id="adminItemsContainer">
+                            <!-- Itens cadastrados serão exibidos aqui -->
+                        </div>
+                    </div>
+                    
+                    <!-- Restaurantes (Admin) -->
+                    <div id="restaurants-section" class="section hidden">
+                        <h2 class="section-title">
+                            <i class="fas fa-store"></i> Gerenciar Restaurantes
+                        </h2>
+                        
+                        <div class="card" style="margin-bottom: 30px;">
+                            <h3 class="card-title">Adicionar Novo Restaurante</h3>
+                            <form id="restaurantForm">
+                                <div class="form-group">
+                                    <label for="restaurantName" class="form-label">Nome do Restaurante</label>
+                                    <input type="text" id="restaurantName" class="form-control" placeholder="Ex: Quantum Steakhouse" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="restaurantAddress" class="form-label">Endereço</label>
+                                    <input type="text" id="restaurantAddress" class="form-control" placeholder="Ex: Av. Tecnológica, 123 - Centro" required>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-plus-circle"></i> Cadastrar Restaurante
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <h3 class="section-title" style="font-size: 1.5rem;">Restaurantes Cadastrados</h3>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Endereço</th>
+                                        <th>Itens Cadastrados</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="restaurantsTableBody">
+                                    <!-- Restaurantes serão carregados aqui -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Gerenciar Usuários (Admin) -->
+                    <div id="users-section" class="section hidden">
+                        <h2 class="section-title">
+                            <i class="fas fa-users"></i> Gerenciar Usuários
+                        </h2>
+                        
+                        <div class="card" style="margin-bottom: 30px;">
+                            <h3 class="card-title">Adicionar Novo Usuário</h3>
+                            <form id="userForm">
+                                <div class="form-group">
+                                    <label for="userNameInput" class="form-label">Nome Completo</label>
+                                    <input type="text" id="userNameInput" class="form-control" placeholder="Ex: João Silva" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="userLogin" class="form-label">Login</label>
+                                    <input type="text" id="userLogin" class="form-control" placeholder="Ex: joao.silva" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="userPassword" class="form-label">Senha</label>
+                                    <input type="password" id="userPassword" class="form-control" placeholder="Digite uma senha" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="userLevel" class="form-label">Nível de Acesso</label>
+                                    <select id="userLevelSelect" class="form-control form-select" required>
+                                        <option value="">Selecione um nível</option>
+                                        <option value="admin">Administrador</option>
+                                        <option value="operator">Operador</option>
+                                    </select>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-user-plus"></i> Cadastrar Usuário
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <h3 class="section-title" style="font-size: 1.5rem;">Usuários do Sistema</h3>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Login</th>
+                                        <th>Nível</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                    <!-- Usuários serão carregados aqui -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </main>
+            </div>
+            
+            <footer>
+                <p>2M Motos Gastronomia &copy; 2023 - Sistema de Pedidos Futurista</p>
+                <p>Tecnologia de ponta para experiências culinárias extraordinárias</p>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Modal para Editar Pedido -->
+    <div id="editOrderModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Editar Pedido</h3>
+                <button class="modal-close" onclick="closeEditOrderModal()">&times;</button>
+            </div>
+            <div id="editOrderContent">
+                <!-- Conteúdo do modal será carregado dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Editar Usuário -->
+    <div id="editUserModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Editar Usuário</h3>
+                <button class="modal-close" onclick="closeEditUserModal()">&times;</button>
+            </div>
+            <form id="editUserForm">
+                <div class="form-group">
+                    <label for="editUserName" class="form-label">Nome Completo</label>
+                    <input type="text" id="editUserName" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editUserLogin" class="form-label">Login</label>
+                    <input type="text" id="editUserLogin" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editUserPassword" class="form-label">Nova Senha (deixe em branco para manter a atual)</label>
+                    <input type="password" id="editUserPassword" class="form-control" placeholder="Digite uma nova senha">
+                </div>
+                
+                <div class="form-group">
+                    <label for="editUserLevel" class="form-label">Nível de Acesso</label>
+                    <select id="editUserLevel" class="form-control form-select" required>
+                        <option value="admin">Administrador</option>
+                        <option value="operator">Operador</option>
+                    </select>
+                </div>
+                
+                <input type="hidden" id="editUserId">
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Salvar Alterações
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEditUserModal()">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Estado da aplicação
+        const state = {
+            currentUser: null,
+            restaurants: [],
+            items: [],
+            users: [],
+            orders: [],
+            currentOrder: {
+                items: [],
+                total: 0
+            },
+            currentFilters: {
+                type: 'almoco',
+                restaurant: 'all'
+            },
+            orderStatusFilter: 'all'
+        };
+
+        // Dados iniciais
+        const initialData = {
+            restaurants: [
+                { id: 1, name: "Quantum Steakhouse", address: "Av. Tecnológica, 123 - Centro" },
+                { id: 2, name: "Nexus Sushi", address: "R. Holográfica, 456 - Nova Era" },
+                { id: 3, name: "Cyber Pizzeria", address: "R. Digital, 789 - Setor Futuro" },
+                { id: 4, name: "Futura Burger", address: "Av. Inovação, 321 - Distrito Tech" },
+                { id: 5, name: "Neo Pastas", address: "R. Quântica, 654 - Bairro Moderno" }
+            ],
+            items: [
+                {
+                    id: 1,
+                    restaurantId: 1,
+                    type: "almoco",
+                    name: "Filé Mignon Quantico",
+                    description: "Filé mignon grelhado com molho de vinho tinto e acompanhamentos futuristas",
+                    price: 89.90
+                },
+                {
+                    id: 2,
+                    restaurantId: 2,
+                    type: "almoco",
+                    name: "Combinado Nexus",
+                    description: "Sushi e sashimi selecionados com toques tecnológicos",
+                    price: 65.50
+                },
+                {
+                    id: 3,
+                    restaurantId: 3,
+                    type: "lanche",
+                    name: "Pizza Holográfica",
+                    description: "Pizza com ingredientes que mudam de sabor conforme cada fatia",
+                    price: 49.90
+                },
+                {
+                    id: 4,
+                    restaurantId: 4,
+                    type: "lanche",
+                    name: "Neo Burger",
+                    description: "Hambúrguer com carne sintética de alta qualidade e queijo derretido",
+                    price: 32.50
+                },
+                {
+                    id: 5,
+                    restaurantId: 5,
+                    type: "almoco",
+                    name: "Espaguete de Luz",
+                    description: "Massa iluminada com molho especial e partículas comestíveis brilhantes",
+                    price: 45.00
+                },
+                {
+                    id: 6,
+                    restaurantId: 1,
+                    type: "outros",
+                    name: "Sobremesa Quântica",
+                    description: "Sobremesa que existe em múltiplos estados de sabor simultaneamente",
+                    price: 28.90
+                },
+                {
+                    id: 7,
+                    restaurantId: 1,
+                    type: "almoco",
+                    name: "Risoto Cibernético",
+                    description: "Risoto com cogumelos e trufas em molho especial",
+                    price: 55.00
+                },
+                {
+                    id: 8,
+                    restaurantId: 2,
+                    type: "almoco",
+                    name: "Temaki Holográfico",
+                    description: "Temaki com salmão e abacate em apresentação futurista",
+                    price: 42.00
+                },
+                {
+                    id: 9,
+                    restaurantId: 3,
+                    type: "lanche",
+                    name: "Calzone Digital",
+                    description: "Calzone recheado com queijos especiais e presunto",
+                    price: 38.50
+                }
+            ],
+            users: [
+                { id: 1, name: "Administrador", login: "admin", password: "motos2026", level: "admin" },
+                { id: 2, name: "Operador", login: "operador", password: "operador123", level: "operator" },
+                { id: 3, name: "Chef Robô", login: "chef", password: "chef123", level: "operator" }
+            ],
+            orders: [
+                {
+                    id: 1001,
+                    userId: 2,
+                    userName: "Operador",
+                    items: [
+                        { id: 1, restaurantId: 1, name: "Filé Mignon Quantico", price: 89.90 },
+                        { id: 5, restaurantId: 5, name: "Espaguete de Luz", price: 45.00 }
+                    ],
+                    total: 134.90,
+                    date: "15/11/2023 14:30",
+                    status: "ready"
+                },
+                {
+                    id: 1002,
+                    userId: 3,
+                    userName: "Chef Robô",
+                    items: [
+                        { id: 3, restaurantId: 3, name: "Pizza Holográfica", price: 49.90 }
+                    ],
+                    total: 49.90,
+                    date: "15/11/2023 15:15",
+                    status: "pending"
+                }
+            ]
+        };
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            // Carregar dados iniciais
+            state.restaurants = initialData.restaurants;
+            state.items = initialData.items;
+            state.users = initialData.users;
+            state.orders = initialData.orders;
+            
+            // Elementos da interface
+            const loginScreen = document.getElementById('loginScreen');
+            const app = document.getElementById('app');
+            const loginButton = document.getElementById('loginButton');
+            const logoutButton = document.getElementById('logoutButton');
+            const loginUsername = document.getElementById('loginUsername');
+            const loginPassword = document.getElementById('loginPassword');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const placeOrderButton = document.getElementById('placeOrderButton');
+            const itemForm = document.getElementById('itemForm');
+            const restaurantForm = document.getElementById('restaurantForm');
+            const userForm = document.getElementById('userForm');
+            const editUserForm = document.getElementById('editUserForm');
+            
+            // Carregar restaurantes no select
+            updateRestaurantSelect();
+            
+            // Atualizar nome do usuário no pedido atual
+            updateCurrentOrderUser();
+            
+            // Login
+            loginButton.addEventListener('click', function() {
+                const username = loginUsername.value.trim();
+                const password = loginPassword.value.trim();
+                
+                if (!username || !password) {
+                    showAlert('Preencha todos os campos!', 'error');
+                    return;
+                }
+                
+                const user = state.users.find(u => u.login === username && u.password === password);
+                
+                if (user) {
+                    state.currentUser = user;
+                    loginScreen.classList.add('hidden');
+                    app.classList.remove('hidden');
+                    updateUIForUser();
+                    showAlert(`Bem-vindo, ${user.name}!`, 'success');
+                    loadRestaurantFilters();
+                    loadItemsByFilters();
+                    updateOrderSummary();
+                } else {
+                    showAlert('Usuário ou senha incorretos!', 'error');
+                }
+            });
+            
+            // Logout
+            logoutButton.addEventListener('click', function() {
+                state.currentUser = null;
+                state.currentOrder = { items: [], total: 0 };
+                app.classList.add('hidden');
+                loginScreen.classList.remove('hidden');
+                loginUsername.value = '';
+                loginPassword.value = '';
+                updateOrderSummary();
+                updateCurrentOrderUser();
+            });
+            
+            // Navegação
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Ativar link clicado
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Mostrar seção correspondente
+                    const section = this.getAttribute('data-section');
+                    document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+                    document.getElementById(`${section}-section`).classList.remove('hidden');
+                    
+                    // Carregar conteúdo se necessário
+                    if (section === 'order') {
+                        loadRestaurantFilters();
+                        loadItemsByFilters();
+                    } else if (section === 'my-orders') {
+                        loadMyOrders();
+                    } else if (section === 'all-orders') {
+                        loadAllOrders();
+                    } else if (section === 'items') {
+                        loadAdminItems();
+                    } else if (section === 'restaurants') {
+                        loadRestaurantsTable();
+                    } else if (section === 'users') {
+                        loadUsersTable();
+                    }
+                });
+            });
+            
+            // Tabs de tipos de itens
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Se for uma tab dentro do container de filtros
+                    if (this.closest('.filters-container')) {
+                        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        const type = this.getAttribute('data-type');
+                        state.currentFilters.type = type;
+                        loadItemsByFilters();
+                    }
+                });
+            });
+            
+            // Filtros de status
+            document.querySelectorAll('.status-filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.status-filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    state.orderStatusFilter = this.getAttribute('data-status');
+                    
+                    // Atualizar a seção atual
+                    const currentSection = document.querySelector('.section:not(.hidden)').id;
+                    if (currentSection === 'my-orders-section') {
+                        loadMyOrders();
+                    } else if (currentSection === 'all-orders-section') {
+                        loadAllOrders();
+                    }
+                });
+            });
+            
+            // Finalizar pedido
+            placeOrderButton.addEventListener('click', function() {
+                if (state.currentOrder.items.length === 0) {
+                    showAlert('Adicione itens ao pedido antes de finalizar!', 'error');
+                    return;
+                }
+                
+                const order = {
+                    id: Date.now(),
+                    userId: state.currentUser.id,
+                    userName: state.currentUser.name,
+                    items: [...state.currentOrder.items],
+                    total: state.currentOrder.total,
+                    date: new Date().toLocaleString('pt-BR'),
+                    status: 'pending'
+                };
+                
+                state.orders.push(order);
+                state.currentOrder = { items: [], total: 0 };
+                
+                updateOrderSummary();
+                showAlert('Pedido realizado com sucesso! Status: Pendente', 'success');
+                
+                // Ir para a seção de pedidos
+                document.querySelector('[data-section="my-orders"]').click();
+            });
+            
+            // Cadastrar item (admin)
+            itemForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const newItem = {
+                    id: Date.now(),
+                    restaurantId: parseInt(document.getElementById('itemRestaurant').value),
+                    type: document.getElementById('itemType').value,
+                    name: document.getElementById('itemName').value,
+                    description: document.getElementById('itemDescription').value,
+                    price: parseFloat(document.getElementById('itemPrice').value)
+                };
+                
+                state.items.push(newItem);
+                itemForm.reset();
+                
+                loadAdminItems();
+                loadRestaurantFilters(); // Atualizar filtros
+                showAlert('Item cadastrado com sucesso!', 'success');
+            });
+            
+            // Cadastrar restaurante (admin)
+            restaurantForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const newRestaurant = {
+                    id: Date.now(),
+                    name: document.getElementById('restaurantName').value,
+                    address: document.getElementById('restaurantAddress').value
+                };
+                
+                state.restaurants.push(newRestaurant);
+                restaurantForm.reset();
+                
+                updateRestaurantSelect();
+                loadRestaurantFilters(); // Atualizar filtros
+                loadRestaurantsTable();
+                showAlert('Restaurante cadastrado com sucesso!', 'success');
+            });
+            
+            // Cadastrar usuário (admin)
+            userForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const newUser = {
+                    id: Date.now(),
+                    name: document.getElementById('userNameInput').value,
+                    login: document.getElementById('userLogin').value,
+                    password: document.getElementById('userPassword').value,
+                    level: document.getElementById('userLevelSelect').value
+                };
+                
+                state.users.push(newUser);
+                userForm.reset();
+                
+                loadUsersTable();
+                showAlert('Usuário cadastrado com sucesso!', 'success');
+            });
+            
+            // Editar usuário (admin)
+            editUserForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const userId = parseInt(document.getElementById('editUserId').value);
+                const userIndex = state.users.findIndex(u => u.id === userId);
+                
+                if (userIndex >= 0) {
+                    const user = state.users[userIndex];
+                    user.name = document.getElementById('editUserName').value;
+                    user.login = document.getElementById('editUserLogin').value;
+                    
+                    const newPassword = document.getElementById('editUserPassword').value;
+                    if (newPassword) {
+                        user.password = newPassword;
+                    }
+                    
+                    user.level = document.getElementById('editUserLevel').value;
+                    
+                    loadUsersTable();
+                    closeEditUserModal();
+                    showAlert('Usuário atualizado com sucesso!', 'success');
+                }
+            });
+            
+            // Permitir login com Enter
+            loginPassword.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    loginButton.click();
+                }
+            });
+        });
+        
+        // Atualizar nome do usuário no pedido atual
+        function updateCurrentOrderUser() {
+            const currentOrderUser = document.getElementById('currentOrderUser');
+            if (state.currentUser) {
+                currentOrderUser.textContent = `Pedido de: ${state.currentUser.name}`;
+            } else {
+                currentOrderUser.textContent = '';
+            }
+        }
+        
+        // Carregar filtros de restaurantes
+        function loadRestaurantFilters() {
+            const container = document.getElementById('restaurantFilters');
+            
+            if (state.restaurants.length === 0) {
+                container.innerHTML = '<p style="color: #aaa;">Nenhum restaurante cadastrado</p>';
+                return;
+            }
+            
+            let filtersHTML = `
+                <button class="btn-filter ${state.currentFilters.restaurant === 'all' ? 'active' : ''}" 
+                        data-restaurant="all" onclick="filterByRestaurant('all')">
+                    <i class="fas fa-globe"></i> Todos os Restaurantes
+                </button>
+            `;
+            
+            state.restaurants.forEach(restaurant => {
+                // Verificar se o restaurante tem itens do tipo atual
+                const hasItems = state.items.some(item => 
+                    item.restaurantId === restaurant.id && 
+                    item.type === state.currentFilters.type
+                );
+                
+                if (hasItems || state.currentFilters.type === 'all') {
+                    filtersHTML += `
+                        <button class="btn-filter ${state.currentFilters.restaurant == restaurant.id ? 'active' : ''}" 
+                                data-restaurant="${restaurant.id}" onclick="filterByRestaurant(${restaurant.id})">
+                            <i class="fas fa-store"></i> ${restaurant.name}
+                        </button>
+                    `;
+                }
+            });
+            
+            container.innerHTML = filtersHTML;
+        }
+        
+        // Filtrar por restaurante
+        window.filterByRestaurant = function(restaurantId) {
+            state.currentFilters.restaurant = restaurantId;
+            loadItemsByFilters();
+            
+            // Atualizar botões ativos
+            document.querySelectorAll('.btn-filter').forEach(btn => {
+                const btnRestaurantId = btn.getAttribute('data-restaurant');
+                if (btnRestaurantId == restaurantId) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+        
+        // Carregar itens com filtros aplicados
+        function loadItemsByFilters() {
+            const container = document.getElementById('itemsContainer');
+            
+            // Aplicar filtros
+            let filteredItems = state.items.filter(item => {
+                // Filtro por tipo
+                if (state.currentFilters.type !== 'all' && item.type !== state.currentFilters.type) {
+                    return false;
+                }
+                
+                // Filtro por restaurante
+                if (state.currentFilters.restaurant !== 'all' && item.restaurantId != state.currentFilters.restaurant) {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            // Atualizar filtros de restaurante (mostrar apenas os que têm itens do tipo atual)
+            loadRestaurantFilters();
+            
+            if (filteredItems.length === 0) {
+                container.innerHTML = `
+                    <div class="no-items">
+                        <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 15px; color: var(--primary);"></i>
+                        <h3>Nenhum item encontrado</h3>
+                        <p>Não há itens disponíveis com os filtros selecionados.</p>
+                        <button class="btn-filter" onclick="resetFilters()" style="margin-top: 15px;">
+                            <i class="fas fa-redo"></i> Limpar Filtros
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = filteredItems.map(item => {
+                const restaurant = state.restaurants.find(r => r.id === item.restaurantId);
+                const typeBadge = item.type === 'almoco' ? 'Almoço' : item.type === 'lanche' ? 'Lanche' : 'Outros';
+                
+                return `
+                <div class="card item-card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                        <div class="restaurant-badge">${restaurant ? restaurant.name : 'Restaurante não encontrado'}</div>
+                        <div style="font-size: 0.8rem; background-color: rgba(255, 42, 109, 0.1); color: var(--secondary); padding: 3px 8px; border-radius: 4px;">
+                            ${typeBadge}
+                        </div>
+                    </div>
+                    <h3 class="card-title">${item.name}</h3>
+                    <p class="card-text">${item.description}</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-weight: bold; color: var(--primary);">R$ ${item.price.toFixed(2)}</div>
+                        <button class="item-select-btn ${state.currentOrder.items.some(i => i.id === item.id) ? 'item-selected' : ''}" 
+                                data-id="${item.id}" onclick="toggleItemSelection(${item.id})">
+                            ${state.currentOrder.items.some(i => i.id === item.id) ? '<i class="fas fa-check"></i> Selecionado' : '<i class="fas fa-plus"></i> Adicionar'}
+                        </button>
+                    </div>
+                </div>
+            `}).join('');
+        }
+        
+        // Resetar filtros
+        window.resetFilters = function() {
+            state.currentFilters = {
+                type: 'almoco',
+                restaurant: 'all'
+            };
+            
+            // Ativar tab de almoço
+            document.querySelectorAll('.tab').forEach(tab => {
+                if (tab.getAttribute('data-type') === 'almoco') {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            loadRestaurantFilters();
+            loadItemsByFilters();
+        }
+        
+        // Atualizar select de restaurantes
+        function updateRestaurantSelect() {
+            const select = document.getElementById('itemRestaurant');
+            select.innerHTML = '<option value="">Selecione um restaurante</option>';
+            
+            state.restaurants.forEach(restaurant => {
+                const option = document.createElement('option');
+                option.value = restaurant.id;
+                option.textContent = restaurant.name;
+                select.appendChild(option);
+            });
+        }
+        
+        // Atualizar UI conforme o usuário logado
+        function updateUIForUser() {
+            const user = state.currentUser;
+            
+            document.getElementById('userName').textContent = user.name;
+            document.getElementById('userLevel').textContent = user.level === 'admin' ? 'Administrador' : 'Operador';
+            document.getElementById('userAvatar').textContent = user.name.charAt(0).toUpperCase();
+            
+            // Mostrar/ocultar funcionalidades baseado no nível
+            const adminElements = document.querySelectorAll('.admin-only');
+            
+            if (user.level === 'admin') {
+                adminElements.forEach(el => el.classList.remove('hidden'));
+                updateCurrentOrderUser();
+            } else {
+                adminElements.forEach(el => el.classList.add('hidden'));
+                updateCurrentOrderUser();
+            }
+        }
+        
+        // Alternar seleção de item
+        window.toggleItemSelection = function(itemId) {
+            const item = state.items.find(i => i.id === itemId);
+            
+            const existingIndex = state.currentOrder.items.findIndex(i => i.id === itemId);
+            
+            if (existingIndex >= 0) {
+                // Remover item
+                state.currentOrder.items.splice(existingIndex, 1);
+                state.currentOrder.total -= item.price;
+            } else {
+                // Adicionar item
+                state.currentOrder.items.push(item);
+                state.currentOrder.total += item.price;
+            }
+            
+            updateOrderSummary();
+            
+            // Atualizar botão
+            const button = document.querySelector(`.item-select-btn[data-id="${itemId}"]`);
+            if (button) {
+                if (existingIndex >= 0) {
+                    button.classList.remove('item-selected');
+                    button.innerHTML = '<i class="fas fa-plus"></i> Adicionar';
+                } else {
+                    button.classList.add('item-selected');
+                    button.innerHTML = '<i class="fas fa-check"></i> Selecionado';
+                }
+            }
+        }
+        
+        // Atualizar resumo do pedido
+        function updateOrderSummary() {
+            const list = document.getElementById('selectedItemsList');
+            const total = document.getElementById('orderTotal');
+            
+            if (state.currentOrder.items.length === 0) {
+                list.innerHTML = `<li class="selected-item"><span>Nenhum item selecionado</span></li>`;
+                total.textContent = 'R$ 0,00';
+                return;
+            }
+            
+            list.innerHTML = state.currentOrder.items.map(item => {
+                const restaurant = state.restaurants.find(r => r.id === item.restaurantId);
+                return `
+                <li class="selected-item">
+                    <div>
+                        <div>${item.name}</div>
+                        <div class="restaurant-address">${restaurant ? restaurant.name : ''}</div>
+                    </div>
+                    <span>R$ ${item.price.toFixed(2)}</span>
+                    <button class="remove-item" onclick="removeItemFromOrder(${item.id})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </li>
+            `}).join('');
+            
+            total.textContent = `R$ ${state.currentOrder.total.toFixed(2)}`;
+        }
+        
+        // Remover item do pedido
+        window.removeItemFromOrder = function(itemId) {
+            const itemIndex = state.currentOrder.items.findIndex(i => i.id === itemId);
+            
+            if (itemIndex >= 0) {
+                const item = state.currentOrder.items[itemIndex];
+                state.currentOrder.items.splice(itemIndex, 1);
+                state.currentOrder.total -= item.price;
+                
+                updateOrderSummary();
+                
+                // Atualizar botão na lista de itens
+                const button = document.querySelector(`.item-select-btn[data-id="${itemId}"]`);
+                if (button) {
+                    button.classList.remove('item-selected');
+                    button.innerHTML = '<i class="fas fa-plus"></i> Adicionar';
+                }
+            }
+        }
+        
+        // Carregar pedidos do usuário
+        function loadMyOrders() {
+            const container = document.getElementById('myOrdersContainer');
+            let userOrders = state.orders.filter(order => order.userId === state.currentUser.id);
+            
+            // Aplicar filtro de status
+            if (state.orderStatusFilter !== 'all') {
+                userOrders = userOrders.filter(order => order.status === state.orderStatusFilter);
+            }
+            
+            if (userOrders.length === 0) {
+                container.innerHTML = `<div class="card"><p>Nenhum pedido encontrado com os filtros selecionados.</p></div>`;
+                return;
+            }
+            
+            container.innerHTML = userOrders.map(order => {
+                const statusText = order.status === 'pending' ? 'Pendente' : order.status === 'ready' ? 'Pronto' : 'Cancelado';
+                const statusClass = order.status === 'pending' ? 'badge-pending' : order.status === 'ready' ? 'badge-ready' : 'badge-cancelled';
+                
+                return `
+                <div class="card" style="margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <h3 class="card-title">Pedido #${order.id}</h3>
+                        <div>
+                            <span class="badge-status ${statusClass}">${statusText}</span>
+                            <div style="color: var(--primary); font-weight: bold; margin-top: 5px;">R$ ${order.total.toFixed(2)}</div>
+                        </div>
+                    </div>
+                    <div class="order-details">
+                        <div class="order-date">Realizado em: ${order.date}</div>
+                    </div>
+                    <ul style="margin-top: 15px; padding-left: 20px;">
+                        ${order.items.map(item => {
+                            const restaurant = state.restaurants.find(r => r.id === item.restaurantId);
+                            return `<li>${item.name} - ${restaurant ? restaurant.name : ''} - R$ ${item.price.toFixed(2)}</li>`;
+                        }).join('')}
+                    </ul>
+                    ${order.status === 'pending' ? `
+                        <div class="order-actions">
+                            <button class="btn btn-sm btn-secondary" onclick="cancelOrder(${order.id})">
+                                <i class="fas fa-times"></i> Cancelar Pedido
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `}).join('');
+        }
+        
+        // Carregar todos os pedidos (admin)
+        function loadAllOrders() {
+            const container = document.getElementById('allOrdersContainer');
+            let allOrders = [...state.orders];
+            
+            // Aplicar filtro de status
+            if (state.orderStatusFilter !== 'all') {
+                allOrders = allOrders.filter(order => order.status === state.orderStatusFilter);
+            }
+            
+            // Ordenar por data (mais recente primeiro)
+            allOrders.sort((a, b) => b.id - a.id);
+            
+            if (allOrders.length === 0) {
+                container.innerHTML = `<div class="card"><p>Nenhum pedido encontrado com os filtros selecionados.</p></div>`;
+                return;
+            }
+            
+            container.innerHTML = allOrders.map(order => {
+                const statusText = order.status === 'pending' ? 'Pendente' : order.status === 'ready' ? 'Pronto' : 'Cancelado';
+                const statusClass = order.status === 'pending' ? 'badge-pending' : order.status === 'ready' ? 'badge-ready' : 'badge-cancelled';
+                
+                return `
+                <div class="card" style="margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <div>
+                            <h3 class="card-title">Pedido #${order.id}</h3>
+                            <div class="order-user">Cliente: ${order.userName}</div>
+                        </div>
+                        <div>
+                            <span class="badge-status ${statusClass}">${statusText}</span>
+                            <div style="color: var(--primary); font-weight: bold; margin-top: 5px;">R$ ${order.total.toFixed(2)}</div>
+                        </div>
+                    </div>
+                    <div class="order-details">
+                        <div class="order-date">Realizado em: ${order.date}</div>
+                    </div>
+                    <ul style="margin-top: 15px; padding-left: 20px;">
+                        ${order.items.map(item => {
+                            const restaurant = state.restaurants.find(r => r.id === item.restaurantId);
+                            return `<li>${item.name} - ${restaurant ? restaurant.name : ''} - R$ ${item.price.toFixed(2)}</li>`;
+                        }).join('')}
+                    </ul>
+                    <div class="order-actions">
+                        ${order.status === 'pending' ? `
+                            <button class="btn btn-sm btn-primary" onclick="markOrderAsReady(${order.id})">
+                                <i class="fas fa-check"></i> Marcar como Pronto
+                            </button>
+                        ` : ''}
+                        ${order.status !== 'cancelled' ? `
+                            <button class="btn btn-sm btn-secondary" onclick="cancelOrder(${order.id})">
+                                <i class="fas fa-times"></i> Cancelar Pedido
+                            </button>
+                        ` : ''}
+                        <button class="btn btn-sm" style="background-color: transparent; border: 1px solid var(--primary); color: var(--primary);" onclick="editOrder(${order.id})">
+                            <i class="fas fa-edit"></i> Editar Pedido
+                        </button>
+                    </div>
+                </div>
+            `}).join('');
+        }
+        
+        // Marcar pedido como pronto
+        window.markOrderAsReady = function(orderId) {
+            const orderIndex = state.orders.findIndex(o => o.id === orderId);
+            
+            if (orderIndex >= 0) {
+                state.orders[orderIndex].status = 'ready';
+                
+                // Atualizar a visualização
+                const currentSection = document.querySelector('.section:not(.hidden)').id;
+                if (currentSection === 'my-orders-section') {
+                    loadMyOrders();
+                } else if (currentSection === 'all-orders-section') {
+                    loadAllOrders();
+                }
+                
+                showAlert('Pedido marcado como pronto!', 'success');
+            }
+        }
+        
+        // Cancelar pedido
+        window.cancelOrder = function(orderId) {
+            if (!confirm('Tem certeza que deseja cancelar este pedido?')) {
+                return;
+            }
+            
+            const orderIndex = state.orders.findIndex(o => o.id === orderId);
+            
+            if (orderIndex >= 0) {
+                state.orders[orderIndex].status = 'cancelled';
+                
+                // Atualizar a visualização
+                const currentSection = document.querySelector('.section:not(.hidden)').id;
+                if (currentSection === 'my-orders-section') {
+                    loadMyOrders();
+                } else if (currentSection === 'all-orders-section') {
+                    loadAllOrders();
+                }
+                
+                showAlert('Pedido cancelado com sucesso!', 'success');
+            }
+        }
+        
+        // Editar pedido
+        window.editOrder = function(orderId) {
+            const order = state.orders.find(o => o.id === orderId);
+            if (!order) return;
+            
+            const modalContent = document.getElementById('editOrderContent');
+            
+            // Encontrar o usuário que fez o pedido
+            const user = state.users.find(u => u.id === order.userId);
+            
+            let itemsHTML = '';
+            state.items.forEach(item => {
+                const isSelected = order.items.some(oi => oi.id === item.id);
+                const restaurant = state.restaurants.find(r => r.id === item.restaurantId);
+                
+                itemsHTML += `
+                    <div style="margin-bottom: 10px; padding: 10px; background-color: rgba(0,0,0,0.2); border-radius: 5px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 600;">${item.name}</div>
+                                <div style="font-size: 0.9rem; color: #aaa;">${restaurant ? restaurant.name : ''} - R$ ${item.price.toFixed(2)}</div>
+                            </div>
+                            <button type="button" class="item-select-btn ${isSelected ? 'item-selected' : ''}" 
+                                    onclick="toggleOrderItem(${orderId}, ${item.id})">
+                                ${isSelected ? '<i class="fas fa-check"></i> Selecionado' : '<i class="fas fa-plus"></i> Adicionar'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            modalContent.innerHTML = `
+                <div class="order-details">
+                    <div class="order-user">Cliente: ${order.userName}</div>
+                    <div class="order-date">Pedido realizado em: ${order.date}</div>
+                    <div style="margin-top: 10px;">
+                        <span class="badge-status ${order.status === 'pending' ? 'badge-pending' : order.status === 'ready' ? 'badge-ready' : 'badge-cancelled'}">
+                            ${order.status === 'pending' ? 'Pendente' : order.status === 'ready' ? 'Pronto' : 'Cancelado'}
+                        </span>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <h4 style="color: var(--primary); margin-bottom: 15px;">Itens do Pedido</h4>
+                    <div style="max-height: 300px; overflow-y: auto; margin-bottom: 20px;">
+                        ${itemsHTML}
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <div style="font-weight: bold; color: var(--primary);">Total: R$ ${order.total.toFixed(2)}</div>
+                        <div>
+                            <button class="btn btn-primary" onclick="saveOrderChanges(${orderId})">
+                                <i class="fas fa-save"></i> Salvar Alterações
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('editOrderModal').classList.remove('hidden');
+        }
+        
+        // Alternar item no pedido (edição)
+        window.toggleOrderItem = function(orderId, itemId) {
+            const order = state.orders.find(o => o.id === orderId);
+            if (!order) return;
+            
+            const item = state.items.find(i => i.id === itemId);
+            if (!item) return;
+            
+            const existingIndex = order.items.findIndex(i => i.id === itemId);
+            
+            if (existingIndex >= 0) {
+                // Remover item
+                order.items.splice(existingIndex, 1);
+                order.total -= item.price;
+            } else {
+                // Adicionar item
+                order.items.push({
+                    id: item.id,
+                    restaurantId: item.restaurantId,
+                    name: item.name,
+                    price: item.price
+                });
+                order.total += item.price;
+            }
+            
+            // Atualizar botão
+            const button = document.querySelector(`.item-select-btn[onclick="toggleOrderItem(${orderId}, ${itemId})"]`);
+            if (button) {
+                if (existingIndex >= 0) {
+                    button.classList.remove('item-selected');
+                    button.innerHTML = '<i class="fas fa-plus"></i> Adicionar';
+                } else {
+                    button.classList.add('item-selected');
+                    button.innerHTML = '<i class="fas fa-check"></i> Selecionado';
+                }
+            }
+            
+            // Atualizar total
+            const totalElement = document.querySelector('#editOrderContent div[style*="font-weight: bold; color: var(--primary);"]');
+            if (totalElement) {
+                totalElement.textContent = `Total: R$ ${order.total.toFixed(2)}`;
+            }
+        }
+        
+        // Salvar alterações do pedido
+        window.saveOrderChanges = function(orderId) {
+            closeEditOrderModal();
+            loadAllOrders();
+            showAlert('Pedido atualizado com sucesso!', 'success');
+        }
+        
+        // Fechar modal de edição de pedido
+        window.closeEditOrderModal = function() {
+            document.getElementById('editOrderModal').classList.add('hidden');
+        }
+        
+        // Abrir modal de edição de usuário
+        window.openEditUserModal = function(userId) {
+            const user = state.users.find(u => u.id === userId);
+            if (!user) return;
+            
+            document.getElementById('editUserId').value = user.id;
+            document.getElementById('editUserName').value = user.name;
+            document.getElementById('editUserLogin').value = user.login;
+            document.getElementById('editUserPassword').value = '';
+            document.getElementById('editUserLevel').value = user.level;
+            
+            document.getElementById('editUserModal').classList.remove('hidden');
+        }
+        
+        // Fechar modal de edição de usuário
+        window.closeEditUserModal = function() {
+            document.getElementById('editUserModal').classList.add('hidden');
+            document.getElementById('editUserForm').reset();
+        }
+        
+        // Carregar itens para administração
+        function loadAdminItems() {
+            const container = document.getElementById('adminItemsContainer');
+            
+            if (state.items.length === 0) {
+                container.innerHTML = `<div class="card"><p>Nenhum item cadastrado.</p></div>`;
+                return;
+            }
+            
+            container.innerHTML = state.items.map(item => {
+                const restaurant = state.restaurants.find(r => r.id === item.restaurantId);
+                return `
+                <div class="card item-card">
+                    <div class="restaurant-badge">${restaurant ? restaurant.name : 'Restaurante não encontrado'}</div>
+                    <h3 class="card-title">${item.name}</h3>
+                    <div class="card-subtitle">${item.type === 'almoco' ? 'Almoço' : item.type === 'lanche' ? 'Lanche' : 'Outros'}</div>
+                    <p class="card-text">${item.description}</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                        <div style="font-weight: bold; color: var(--primary);">R$ ${item.price.toFixed(2)}</div>
+                        <button class="item-select-btn" onclick="deleteItem(${item.id})" style="background-color: transparent; border-color: var(--danger); color: var(--danger);">
+                            <i class="fas fa-trash"></i> Excluir
+                        </button>
+                    </div>
+                </div>
+            `}).join('');
+        }
+        
+        // Excluir item
+        window.deleteItem = function(itemId) {
+            if (confirm('Tem certeza que deseja excluir este item?')) {
+                const itemIndex = state.items.findIndex(i => i.id === itemId);
+                
+                if (itemIndex >= 0) {
+                    state.items.splice(itemIndex, 1);
+                    loadAdminItems();
+                    loadRestaurantFilters(); // Atualizar filtros
+                    loadItemsByFilters(); // Atualizar itens exibidos
+                    showAlert('Item excluído com sucesso!', 'success');
+                }
+            }
+        }
+        
+        // Carregar tabela de restaurantes
+        function loadRestaurantsTable() {
+            const tbody = document.getElementById('restaurantsTableBody');
+            
+            tbody.innerHTML = state.restaurants.map(restaurant => {
+                const itemCount = state.items.filter(item => item.restaurantId === restaurant.id).length;
+                return `
+                <tr>
+                    <td>${restaurant.name}</td>
+                    <td>${restaurant.address}</td>
+                    <td>${itemCount} item(s)</td>
+                    <td>
+                        <button class="item-select-btn" onclick="deleteRestaurant(${restaurant.id})" style="background-color: transparent; border-color: var(--danger); color: var(--danger); padding: 5px 10px; font-size: 0.9rem;">
+                            <i class="fas fa-trash"></i> Excluir
+                        </button>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+        
+        // Excluir restaurante
+        window.deleteRestaurant = function(restaurantId) {
+            // Verificar se existem itens associados ao restaurante
+            const itemCount = state.items.filter(item => item.restaurantId === restaurantId).length;
+            
+            if (itemCount > 0) {
+                showAlert('Não é possível excluir um restaurante que possui itens cadastrados!', 'error');
+                return;
+            }
+            
+            if (confirm('Tem certeza que deseja excluir este restaurante?')) {
+                const restaurantIndex = state.restaurants.findIndex(r => r.id === restaurantId);
+                
+                if (restaurantIndex >= 0) {
+                    state.restaurants.splice(restaurantIndex, 1);
+                    updateRestaurantSelect();
+                    loadRestaurantFilters(); // Atualizar filtros
+                    loadRestaurantsTable();
+                    showAlert('Restaurante excluído com sucesso!', 'success');
+                }
+            }
+        }
+        
+        // Carregar tabela de usuários
+        function loadUsersTable() {
+            const tbody = document.getElementById('usersTableBody');
+            
+            tbody.innerHTML = state.users.map(user => `
+                <tr>
+                    <td>${user.name}</td>
+                    <td>${user.login}</td>
+                    <td><span class="badge ${user.level === 'admin' ? 'badge-admin' : 'badge-operator'}">
+                        ${user.level === 'admin' ? 'Administrador' : 'Operador'}
+                    </span></td>
+                    <td>
+                        <div style="display: flex; gap: 5px;">
+                            <button class="item-select-btn" onclick="openEditUserModal(${user.id})" style="background-color: transparent; border-color: var(--primary); color: var(--primary); padding: 5px 10px; font-size: 0.9rem;">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                            ${user.id > 2 ? `
+                                <button class="item-select-btn" onclick="deleteUser(${user.id})" style="background-color: transparent; border-color: var(--danger); color: var(--danger); padding: 5px 10px; font-size: 0.9rem;">
+                                    <i class="fas fa-trash"></i> Excluir
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        // Excluir usuário
+        window.deleteUser = function(userId) {
+            if (userId <= 2) {
+                showAlert('Usuários padrão não podem ser excluídos!', 'error');
+                return;
+            }
+            
+            if (confirm('Tem certeza que deseja excluir este usuário?')) {
+                const userIndex = state.users.findIndex(u => u.id === userId);
+                
+                if (userIndex >= 0) {
+                    state.users.splice(userIndex, 1);
+                    loadUsersTable();
+                    showAlert('Usuário excluído com sucesso!', 'success');
+                }
+            }
+        }
+        
+        // Mostrar alerta
+        function showAlert(message, type) {
+            // Remover alertas anteriores
+            const existingAlert = document.querySelector('.alert');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+            
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            // Adicionar ao conteúdo principal
+            const contentArea = document.querySelector('.content-area');
+            contentArea.insertBefore(alert, contentArea.firstChild);
+            
+            // Remover após 5 segundos
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
